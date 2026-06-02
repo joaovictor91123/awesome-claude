@@ -512,6 +512,33 @@ describe("Cloudflare submission gate helpers", () => {
     expect(wranglerConfig).toContain('"name": "SUBMISSION_DRAFT_RATE_LIMIT"');
   });
 
+  it("limits GitHub webhook bodies before parsing or persistence", () => {
+    const source = readWorkerSource();
+    const webhookSource =
+      source.match(
+        /async function githubWebhookRoute[\s\S]*?\nasync function handleReviewMessage/,
+      )?.[0] || "";
+    const signatureIndex = webhookSource.indexOf(
+      'request.headers.get("x-hub-signature-256")',
+    );
+    const missingSignatureIndex = webhookSource.indexOf("if (!signature)");
+    const readIndex = webhookSource.indexOf("readRequestTextWithLimit");
+    const verifyIndex = webhookSource.indexOf("verifyGitHubWebhookSignature");
+    const parseIndex = webhookSource.indexOf("JSON.parse(raw)");
+    const auditIndex = webhookSource.indexOf("putAuditObject");
+
+    expect(source).toContain("const GITHUB_WEBHOOK_BODY_LIMIT_BYTES");
+    expect(source).toContain("class RequestBodyTooLargeError extends Error");
+    expect(source).toContain('error: "body_too_large"');
+    expect(source).not.toContain("const raw = await request.text();");
+    expect(signatureIndex).toBeGreaterThan(0);
+    expect(missingSignatureIndex).toBeGreaterThan(signatureIndex);
+    expect(readIndex).toBeGreaterThan(missingSignatureIndex);
+    expect(verifyIndex).toBeGreaterThan(readIndex);
+    expect(parseIndex).toBeGreaterThan(verifyIndex);
+    expect(auditIndex).toBeGreaterThan(parseIndex);
+  });
+
   it("rejects cancelled GitHub authorization callbacks before token exchange", () => {
     const source = readWorkerSource();
     const callbackSource =

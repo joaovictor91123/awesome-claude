@@ -110,6 +110,13 @@ class DraftBodyTooLargeError extends Error {
   }
 }
 
+class RequestBodyTooLargeError extends Error {
+  constructor(limitBytes: number) {
+    super(`Request body exceeds ${limitBytes} bytes.`);
+    this.name = "RequestBodyTooLargeError";
+  }
+}
+
 class SubmissionLockBusyError extends Error {
   constructor(targetKey: string) {
     super(`Submission lock is busy for ${targetKey}.`);
@@ -146,6 +153,7 @@ const SUPPORTED_CONTENT_CATEGORIES = new Set([
 ]);
 
 const MAX_DRAFT_BODY_BYTES = 64 * 1024;
+const GITHUB_WEBHOOK_BODY_LIMIT_BYTES = 1024 * 1024;
 
 const PUBLIC_DRAFT_FIELD_REDACTIONS = new Set([
   "address",
@@ -386,6 +394,54 @@ function callbackUrl(request: Request) {
 function draftStatusUrl(request: Request, id: string) {
   const url = new URL(request.url);
   return `${url.origin}/drafts/${id}`;
+}
+
+function requestBodyTooLarge(limitBytes: number) {
+  return json(
+    {
+      ok: false,
+      error: "body_too_large",
+      message: `Request body must be ${limitBytes} bytes or smaller.`,
+    },
+    { status: 413 },
+  );
+}
+
+function enforceContentLengthLimit(request: Request, limitBytes: number) {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength === null) return;
+  const parsedLength = Number(contentLength);
+  if (!Number.isFinite(parsedLength) || parsedLength < 0) {
+    throw new RequestBodyTooLargeError(limitBytes);
+  }
+  if (parsedLength > limitBytes) {
+    throw new RequestBodyTooLargeError(limitBytes);
+  }
+}
+
+async function readRequestTextWithLimit(request: Request, limitBytes: number) {
+  enforceContentLengthLimit(request, limitBytes);
+  if (!request.body) return "";
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let bytesRead = 0;
+  let text = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytesRead += value.byteLength;
+      if (bytesRead > limitBytes) {
+        throw new RequestBodyTooLargeError(limitBytes);
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return text;
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 async function putAuditObject(env: Env, key: string, payload: unknown) {
@@ -1451,7 +1507,6 @@ async function githubWebhookRoute(
   env: Env,
   ctx: ExecutionContext,
 ) {
-  const raw = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
   const deliveryId =
     request.headers.get("x-github-delivery") || crypto.randomUUID();
@@ -1460,6 +1515,22 @@ async function githubWebhookRoute(
       { ok: false, error: "webhook_secret_not_configured" },
       { status: 503 },
     );
+  }
+  if (!signature) {
+    return json({ ok: false, error: "invalid_signature" }, { status: 401 });
+  }
+
+  let raw: string;
+  try {
+    raw = await readRequestTextWithLimit(
+      request,
+      GITHUB_WEBHOOK_BODY_LIMIT_BYTES,
+    );
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return requestBodyTooLarge(GITHUB_WEBHOOK_BODY_LIMIT_BYTES);
+    }
+    throw error;
   }
   const valid = await verifyGitHubWebhookSignature({
     secret: env.GITHUB_WEBHOOK_SECRET,
