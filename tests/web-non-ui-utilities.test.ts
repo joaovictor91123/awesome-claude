@@ -22,11 +22,15 @@ import { ENTRIES } from "../apps/web/src/data/entries";
 import { COMPARISONS } from "../apps/web/src/data/comparisons";
 import {
   CONTRIBUTORS,
+  authorMatchesSubmitter,
   contributorAcceptedEntryRole,
+  contributorForDisplayAuthor,
+  contributorForSubmitter,
   contributorForVerifiedAuthor,
   contributorMatchesIdentity,
   contributorReviewedEntry,
   contributorSlug,
+  findContributorForIdentity,
   getContributor,
   githubHandle,
 } from "../apps/web/src/data/contributors";
@@ -641,6 +645,79 @@ describe("web non-UI utility coverage", () => {
     expect(PARTNERS.some((partner) => partner.slotState === "open")).toBe(true);
   });
 
+  it("indexes submitter identity in search haystack for attribution discovery", () => {
+    const splitEntry = ENTRIES.find(
+      (item) =>
+        item.slug === "abmeter-mcp-server" &&
+        item.submittedBy &&
+        item.author &&
+        item.submittedBy.toLowerCase() !== item.author.toLowerCase(),
+    );
+    expect(splitEntry).toBeTruthy();
+    expect(splitEntry?.submittedBy).toBe("kiannidev");
+    expect(
+      search({ q: "kiannidev", sort: "title" }).some(
+        (item) => item.slug === "abmeter-mcp-server",
+      ),
+    ).toBe(true);
+  });
+
+  it("tracks distinct author profiles when author differs from submitter", () => {
+    const splitEntry = ENTRIES.find(
+      (item) => item.slug === "abmeter-mcp-server",
+    );
+    expect(splitEntry).toBeTruthy();
+    const submitter = getContributor("kiannidev");
+    const author = getContributor("abmeter");
+    expect(submitter).toBeTruthy();
+    expect(author).toBeTruthy();
+    expect(contributorAcceptedEntryRole(submitter!, splitEntry!)).toBe(
+      "submitted",
+    );
+    expect(contributorAcceptedEntryRole(author!, splitEntry!)).toBe("authored");
+    expect(contributorForSubmitter(splitEntry!)).toBe(submitter);
+    expect(contributorForDisplayAuthor(splitEntry!)).toBe(author);
+    expect(
+      contributorForVerifiedAuthor(splitEntry!.author, splitEntry!.submittedBy),
+    ).toBeUndefined();
+    if (splitEntry?.sourceSubmissionUrl || splitEntry?.importPrUrl) {
+      expect((submitter?.sourceSubmissionCount ?? 0) > 0).toBe(true);
+      expect(author?.sourceSubmissionCount ?? 0).toBe(0);
+    }
+  });
+
+  it("keeps author-only contributor profiles off source-submission credit", () => {
+    const authoredOnly = ENTRIES.find(
+      (item) =>
+        item.author &&
+        item.submittedBy &&
+        item.author.toLowerCase() !== item.submittedBy.toLowerCase() &&
+        (item.sourceSubmissionUrl || item.importPrUrl),
+    );
+    expect(authoredOnly).toBeTruthy();
+    const authorProfile = getContributor(contributorSlug(authoredOnly!.author));
+    const submitterProfile = getContributor(
+      contributorSlug(authoredOnly!.submittedBy!),
+    );
+    expect(authorProfile).toBeTruthy();
+    expect(submitterProfile).toBeTruthy();
+    expect(authorProfile!.sourceSubmissionCount ?? 0).toBe(0);
+    expect(submitterProfile!.sourceSubmissionCount ?? 0).toBeGreaterThan(0);
+  });
+
+  it("resolves contributor profile slugs for linked source citations", () => {
+    const splitEntry = ENTRIES.find(
+      (item) => item.slug === "abmeter-mcp-server",
+    );
+    expect(splitEntry).toBeTruthy();
+    expect(
+      findContributorForIdentity(
+        splitEntry!.submittedBy,
+        splitEntry!.submittedByUrl,
+      )?.slug,
+    ).toBe("kiannidev");
+  });
+
   it("builds tag groups and related tags from normalized live entry tags", () => {
     expect(tagSlug(" Claude Code / MCP ")).toBe("claude-code-mcp");
     const groups = getAllTagGroups();
@@ -891,6 +968,24 @@ describe("web non-UI utility coverage", () => {
     expect(githubHandle("https://github.com/JSONbored")).toBe("JSONbored");
     expect(githubHandle("https://example.com/JSONbored")).toBeUndefined();
     expect(githubHandle("not a url")).toBeUndefined();
+
+    const liveContributor = CONTRIBUTORS.find(
+      (item) => item.slug === "kiannidev",
+    );
+    expect(liveContributor).toBeTruthy();
+    expect(
+      findContributorForIdentity("kiannidev", liveContributor?.github),
+    ).toBe(liveContributor);
+    expect(findContributorForIdentity("kiannidev")).toBe(liveContributor);
+    expect(findContributorForIdentity("Unknown Person")).toBeUndefined();
+    expect(authorMatchesSubmitter("kiannidev", "kiannidev")).toBe(true);
+    expect(authorMatchesSubmitter("ABMeter", "kiannidev")).toBe(false);
+    expect(
+      contributorForSubmitter({
+        submittedBy: "kiannidev",
+        submittedByUrl: liveContributor?.github,
+      }),
+    ).toBe(liveContributor);
 
     expect(OPENAPI_TAGS.map((tag) => tag.id)).toContain("registry");
     expect(OPENAPI_TAGS.map((tag) => tag.id)).toContain("admin");

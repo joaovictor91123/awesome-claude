@@ -1,14 +1,8 @@
 import { ENTRIES } from "@/data/entries";
+import { authorMatchesSubmitter, contributorSlug } from "@/lib/contributor-identity";
 import type { Category, Contributor, Entry } from "@/types/registry";
 
-export function contributorSlug(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/^@/, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+export { authorMatchesSubmitter, contributorSlug };
 
 export function githubHandle(profileUrl?: string) {
   if (!profileUrl) return undefined;
@@ -71,6 +65,8 @@ export function contributorReviewedEntry(contributor: Contributor, entry: Entry)
 }
 
 type MutableContributor = Contributor & {
+  reviewedCount: number;
+  sourceSubmissionCount: number;
   categoryCounts: Map<Category, number>;
 };
 
@@ -78,44 +74,59 @@ function incrementCategory(contributor: MutableContributor, category: Category) 
   contributor.categoryCounts.set(category, (contributor.categoryCounts.get(category) ?? 0) + 1);
 }
 
+function upsertContributor(
+  grouped: Map<string, MutableContributor>,
+  name: string,
+  profileUrl: string | undefined,
+  entry: Entry,
+  options: { creditSourceSubmission?: boolean } = {},
+) {
+  const slug = contributorSlug(name);
+  if (!slug) return;
+  const handle = githubHandle(profileUrl) || name.replace(/^@/, "");
+  const existing =
+    grouped.get(slug) ??
+    ({
+      slug,
+      handle,
+      name,
+      github: profileUrl,
+      bio: "Contributor credited on accepted HeyClaude registry entries.",
+      acceptedCount: 0,
+      reviewedCount: 0,
+      sourceSubmissionCount: 0,
+      categories: [],
+      categoryCounts: new Map<Category, number>(),
+    } satisfies MutableContributor);
+
+  existing.acceptedCount += 1;
+  if (options.creditSourceSubmission && (entry.sourceSubmissionUrl || entry.importPrUrl)) {
+    existing.sourceSubmissionCount += 1;
+  }
+  incrementCategory(existing, entry.category);
+  existing.github ||= profileUrl;
+  grouped.set(slug, existing);
+}
+
 export const CONTRIBUTORS: Contributor[] = (() => {
   const grouped = new Map<string, MutableContributor>();
 
   for (const entry of ENTRIES) {
-    const name = String(entry.submittedBy || entry.author || "JSONbored").trim();
-    if (!name) continue;
-    const slug = contributorSlug(name);
-    if (!slug) continue;
-    const profileUrl = entry.submittedByUrl;
-    const handle = githubHandle(profileUrl) || name.replace(/^@/, "");
-    const existing =
-      grouped.get(slug) ??
-      ({
-        slug,
-        handle,
-        name,
-        github: profileUrl,
-        bio: "Contributor credited on accepted HeyClaude registry entries.",
-        acceptedCount: 0,
-        reviewedCount: 0,
-        sourceSubmissionCount: 0,
-        categories: [],
-        categoryCounts: new Map<Category, number>(),
-      } satisfies MutableContributor);
+    const submitter = String(entry.submittedBy || entry.author || "JSONbored").trim();
+    upsertContributor(grouped, submitter, entry.submittedByUrl, entry, {
+      creditSourceSubmission: true,
+    });
 
-    existing.acceptedCount += 1;
-    if (entry.sourceSubmissionUrl || entry.importPrUrl) {
-      existing.sourceSubmissionCount = (existing.sourceSubmissionCount ?? 0) + 1;
+    const author = String(entry.author || "").trim();
+    if (shouldRegisterDistinctAuthorProfile(entry, submitter)) {
+      upsertContributor(grouped, author, entry.authorProfileUrl, entry);
     }
-    incrementCategory(existing, entry.category);
-    existing.github ||= profileUrl;
-    grouped.set(slug, existing);
   }
 
   for (const entry of ENTRIES) {
     for (const contributor of grouped.values()) {
       if (contributorReviewedEntry(contributor, entry)) {
-        contributor.reviewedCount = (contributor.reviewedCount ?? 0) + 1;
+        contributor.reviewedCount += 1;
       }
     }
   }
@@ -139,6 +150,13 @@ export function getContributor(slug: string) {
   return CONTRIBUTORS.find((c) => c.slug === slug);
 }
 
+export function findContributorForIdentity(name?: string, profileUrl?: string) {
+  if (!name) return undefined;
+  return CONTRIBUTORS.find((contributor) =>
+    contributorMatchesIdentity(contributor, name, profileUrl),
+  );
+}
+
 export function contributorForVerifiedAuthor(author?: string, submittedBy?: string) {
   if (!author || !submittedBy) return undefined;
 
@@ -147,4 +165,44 @@ export function contributorForVerifiedAuthor(author?: string, submittedBy?: stri
   if (!authorSlug || authorSlug !== submittedBySlug) return undefined;
 
   return getContributor(submittedBySlug);
+}
+
+export function contributorForSubmitter(entry: Pick<Entry, "submittedBy" | "submittedByUrl">) {
+  if (!entry.submittedBy) return undefined;
+  return findContributorForIdentity(entry.submittedBy, entry.submittedByUrl);
+}
+
+export function shouldRegisterDistinctAuthorProfile(
+  entry: Pick<Entry, "author" | "submittedBy" | "authorProfileUrl">,
+  submitter: string,
+) {
+  const author = String(entry.author || "").trim();
+  const authorSlug = contributorSlug(author);
+  if (!authorSlug || authorSlug === contributorSlug(submitter)) return false;
+  if (!entry.authorProfileUrl) return false;
+  if (
+    entry.submittedBy &&
+    !authorMatchesSubmitter(entry.author, entry.submittedBy) &&
+    githubHandle(entry.authorProfileUrl) === authorSlug
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function contributorForDisplayAuthor(
+  entry: Pick<Entry, "author" | "submittedBy" | "authorProfileUrl">,
+) {
+  const verifiedAuthor = contributorForVerifiedAuthor(entry.author, entry.submittedBy);
+  if (verifiedAuthor) return verifiedAuthor;
+  if (!entry.submittedBy || authorMatchesSubmitter(entry.author, entry.submittedBy)) {
+    return findContributorForIdentity(entry.author, entry.authorProfileUrl);
+  }
+
+  const submitter = String(entry.submittedBy).trim();
+  if (!shouldRegisterDistinctAuthorProfile(entry, submitter)) {
+    return undefined;
+  }
+
+  return findContributorForIdentity(entry.author, entry.authorProfileUrl);
 }

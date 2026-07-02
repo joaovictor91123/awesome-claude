@@ -24,7 +24,8 @@ import { getEntry, related, relatedGroups, relatedGuides } from "@/data/search";
 import { getEntryRedirectTarget } from "@/lib/entry-redirects";
 import { BEST_LISTS } from "@/data/entries";
 import { COMPARISONS } from "@/data/comparisons";
-import { contributorForVerifiedAuthor } from "@/data/contributors";
+import { EntryAuthorAttribution } from "@/components/contributor-attribution";
+import { findContributorForIdentity } from "@/data/contributors";
 import {
   CategoryPill,
   PlatformChip,
@@ -232,7 +233,6 @@ function Dossier() {
   const entryRef = `${entry.category}/${entry.slug}`;
   const comparedIn = COMPARISONS.filter((c) => c.refs.includes(entryRef));
   const featuredIn = BEST_LISTS.filter((l) => l.picks.some((p) => p.ref === entryRef));
-  const authorContributor = contributorForVerifiedAuthor(entry.author, entry.submittedBy);
   const recents = useRecents();
   useEffect(() => {
     recents.pushEntry({ category: entry.category, slug: entry.slug, title: entry.title });
@@ -340,20 +340,7 @@ function Dossier() {
             {entry.description}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-muted">
-            <span>
-              by{" "}
-              {authorContributor ? (
-                <Link
-                  to="/contributors/$slug"
-                  params={{ slug: authorContributor.slug }}
-                  className="text-ink hover:underline"
-                >
-                  {entry.author}
-                </Link>
-              ) : (
-                <span className="text-ink">{entry.author}</span>
-              )}
-            </span>
+            <EntryAuthorAttribution entry={entry} />
             <span>·</span>
             <span>added {entry.dateAdded}</span>
             {entry.repoStats?.stars !== undefined && (
@@ -648,7 +635,12 @@ function Dossier() {
           </DossierSection>
 
           <DossierSection id="citations" icon={FileText} title="Source citations">
-            <SourceCitations entry={entry} />
+            <SourceCitations
+              entry={entry}
+              resolveContributorSlug={(name, profileUrl) =>
+                findContributorForIdentity(name, profileUrl)?.slug
+              }
+            />
           </DossierSection>
 
           <BadgeSection category={entry.category} slug={entry.slug} title={entry.title} />

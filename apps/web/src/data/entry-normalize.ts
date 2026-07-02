@@ -1,5 +1,6 @@
 import { normalizePlatform } from "@heyclaude/registry";
 
+import { authorMatchesSubmitter } from "@/lib/contributor-identity";
 import type {
   Category,
   Entry,
@@ -397,6 +398,11 @@ export function buildEntry(entry: RegistryEntry): Entry {
   const platforms = inferPlatforms(entry);
   const reviewedAt =
     entry.reviewedAt ?? entry.trustSignals?.lastVerifiedAt ?? entry.contentUpdatedAt;
+  const authorProfileUrl = entry.authorProfileUrl;
+  const author = entry.author ?? entry.submittedBy ?? entry.brandName ?? "Unknown";
+  const submittedByUrl =
+    entry.submittedByUrl ??
+    (authorMatchesSubmitter(author, entry.submittedBy) ? authorProfileUrl : undefined);
 
   return {
     category,
@@ -406,9 +412,10 @@ export function buildEntry(entry: RegistryEntry): Entry {
     seoTitle: entry.seoTitle,
     seoDescription: entry.seoDescription,
     cardDescription: entry.cardDescription,
-    author: entry.author ?? entry.submittedBy ?? entry.brandName ?? "Unknown",
+    author,
+    authorProfileUrl,
     submittedBy: entry.submittedBy,
-    submittedByUrl: entry.submittedByUrl ?? entry.authorProfileUrl,
+    submittedByUrl,
     submittedAt: entry.submittedAt ?? entry.dateAdded,
     sourceSubmissionUrl: entry.sourceSubmissionUrl,
     importPrUrl: entry.importPrUrl,
