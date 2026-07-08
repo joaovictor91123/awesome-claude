@@ -2,6 +2,7 @@ import * as React from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TrustBadge } from "@/components/badges";
 import { getTrustReasons, summarizeTrust, type TrustReason } from "@/lib/trust";
+import { trustSummaryLine } from "@/lib/trust-summary-line-lib";
 import type { Entry } from "@/types/registry";
 import {
   CheckCircle2,
@@ -30,13 +31,7 @@ export function TrustDrilldown({
 }) {
   const reasons = React.useMemo(() => getTrustReasons(entry), [entry]);
   const counts = summarizeTrust(reasons);
-  const summary = [
-    counts.blocker && `${counts.blocker} blocker${counts.blocker === 1 ? "" : "s"}`,
-    counts.warning && `${counts.warning} warning${counts.warning === 1 ? "" : "s"}`,
-    counts.info && `${counts.info} info`,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const summary = trustSummaryLine(counts);
 
   return (
     <Popover>
