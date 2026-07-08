@@ -5,44 +5,12 @@ import { Webhook } from "svix";
 import { apiError, apiJson, createApiHandler } from "@/lib/api/router";
 import { logApiError, logApiInfo, logApiWarn, redactEmail } from "@/lib/api-logs";
 import { getEnvString } from "@/lib/cloudflare-env.server";
-
-type ResendEvent = {
-  type?: string;
-  data?: Record<string, unknown>;
-};
-
-function getEventEmail(data?: Record<string, unknown>) {
-  const value = data?.email;
-  return typeof value === "string" ? value : "unknown";
-}
-
-function shouldNotify(event: ResendEvent) {
-  const type = String(event.type ?? "");
-  return type.startsWith("contact.") || type === "email.delivered" || type === "email.bounced";
-}
-
-function toDiscordContent(event: ResendEvent) {
-  const type = String(event.type ?? "unknown");
-  const email = getEventEmail(event.data);
-
-  if (type === "contact.created") {
-    return `Newsletter subscriber added: \`${email}\``;
-  }
-  if (type === "contact.updated") {
-    const unsubscribed = Boolean(event.data?.unsubscribed);
-    return unsubscribed
-      ? `Newsletter unsubscribe: \`${email}\``
-      : `Newsletter subscriber updated: \`${email}\``;
-  }
-  if (type === "email.bounced") {
-    return `Newsletter delivery bounced: \`${email}\``;
-  }
-  if (type === "email.delivered") {
-    return `Newsletter delivered: \`${email}\``;
-  }
-
-  return `Resend event: \`${type}\` (\`${email}\`)`;
-}
+import {
+  getEventEmail,
+  shouldNotify,
+  toDiscordContent,
+  type ResendEvent,
+} from "@/lib/newsletter-webhook-lib";
 
 function verifyWebhookSignature(params: { rawBody: string; request: Request; secret: string }) {
   const { rawBody, request, secret } = params;
