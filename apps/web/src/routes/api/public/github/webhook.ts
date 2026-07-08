@@ -14,6 +14,7 @@ import { createApiFileRoute } from "@/lib/api/file-route";
 
 import { BodyTooLargeError, readRequestTextWithinLimit } from "@/lib/api-security";
 import { getEnvString } from "@/lib/cloudflare-env.server";
+import { timingSafeStringEqual, toHex } from "@/lib/webhook-signature-lib";
 
 const ALLOWED_REPO = "jsonbored/awesome-claude";
 const ALLOWED_BRANCH = "main";
@@ -38,19 +39,6 @@ interface PushFile {
   id?: string;
   timestamp?: string;
   message?: string;
-}
-
-function toHex(buffer: ArrayBuffer) {
-  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-function timingSafeStringEqual(left: string, right: string) {
-  if (left.length !== right.length) return false;
-  let diff = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    diff |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-  return diff === 0;
 }
 
 async function verify(secret: string, signature: string | null, body: string): Promise<boolean> {
