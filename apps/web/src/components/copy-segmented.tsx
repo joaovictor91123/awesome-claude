@@ -2,13 +2,10 @@ import * as React from "react";
 import { toast } from "sonner";
 import { Check, Copy } from "lucide-react";
 import { useCopyPref, type CopyVariant } from "@/lib/dossier-prefs";
+import { variantsForEntry, type VariantOption } from "@/lib/copy-segmented-lib";
 import { cn } from "@/lib/utils";
 
-export interface VariantOption {
-  id: CopyVariant;
-  label: string;
-  value?: string;
-}
+export { variantsForEntry, type VariantOption };
 
 interface Props {
   variants: VariantOption[];
@@ -160,28 +157,4 @@ export function CopySegmented({
       <span ref={liveRef} aria-live="polite" className="sr-only" />
     </div>
   );
-}
-
-/**
- * Resolve the variants array for an entry, honoring an optional harness
- * variant override and falling back to the entry's top-level fields.
- */
-export function variantsForEntry(
-  entry: {
-    installCommand?: string;
-    configSnippet?: string;
-    fullCopy?: string;
-    harnessVariants?: Record<
-      string,
-      { installCommand?: string; configSnippet?: string; fullCopy?: string } | undefined
-    >;
-  },
-  harnessId?: string | null,
-): VariantOption[] {
-  const hv = harnessId ? entry.harnessVariants?.[harnessId] : undefined;
-  return [
-    { id: "install", label: "Install", value: hv?.installCommand ?? entry.installCommand },
-    { id: "config", label: "Config", value: hv?.configSnippet ?? entry.configSnippet },
-    { id: "full", label: "Full", value: hv?.fullCopy ?? entry.fullCopy },
-  ];
 }
