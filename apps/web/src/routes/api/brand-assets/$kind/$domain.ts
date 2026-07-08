@@ -1,18 +1,15 @@
 import { createApiFileRoute } from "@/lib/api/file-route";
 
-import {
-  brandfetchLogoUrl,
-  normalizeBrandDomain,
-} from "@heyclaude/registry/brand-assets";
+import { brandfetchLogoUrl, normalizeBrandDomain } from "@heyclaude/registry/brand-assets";
 
 import { brandAssetParamsSchema } from "@/lib/api/contracts";
 import { apiError, createApiHandler, type InferApiParams } from "@/lib/api/router";
 import { getEnvString } from "@/lib/cloudflare-env.server";
+import { normalizeTrustedBrandAssetUrl } from "@/lib/brand-asset-url-lib";
 import { applySecurityHeaders } from "@/lib/security-headers";
 
 const CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=604800";
 const MAX_BRAND_ASSET_BYTES = 1024 * 1024;
-const TRUSTED_BRAND_ASSET_HOSTS = new Set(["asset.brandfetch.io", "cdn.brandfetch.io"]);
 const TRUSTED_BRAND_ASSET_CONTENT_TYPES = new Set([
   "image/avif",
   "image/jpeg",
@@ -54,19 +51,6 @@ function resolveBrandLogoUrl(domain: string, clientId: string) {
     type: "logo",
     width: 512,
   });
-}
-
-function normalizeTrustedBrandAssetUrl(value: string) {
-  try {
-    const parsed = new URL(value);
-    if (parsed.protocol !== "https:") return "";
-    if (!TRUSTED_BRAND_ASSET_HOSTS.has(parsed.hostname.toLowerCase())) {
-      return "";
-    }
-    return parsed.toString();
-  } catch {
-    return "";
-  }
 }
 
 async function fetchTrustedBrandAsset(value: string) {
