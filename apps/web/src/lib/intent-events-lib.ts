@@ -1,4 +1,8 @@
-import { getSiteDb, type D1DatabaseLike } from "@/lib/db";
+﻿// `D1DatabaseLike` is imported as a type only: `queryIntentEventCounts` receives
+// its database as an argument, so this module must not pull `@/lib/db` (and
+// through it `cloudflare-env.server`) into the browser bundle. The client
+// reaches this file via `intent-event-client.ts` for `normalizeIntentEntryKey`.
+import type { D1DatabaseLike } from "@/lib/db";
 import { chunk, inPlaceholders } from "@/lib/d1-batch";
 
 export const INTENT_EVENT_TYPES = ["copy", "open", "install", "download", "vote"] as const;
