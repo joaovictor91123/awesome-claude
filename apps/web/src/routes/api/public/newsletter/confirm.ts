@@ -6,39 +6,19 @@ import { BodyTooLargeError, readRequestTextWithinLimit } from "@/lib/api-securit
 import { getEnvString } from "@/lib/cloudflare-env.server";
 import { verifyConfirmToken } from "@/lib/newsletter-token.server";
 import { addNewsletterContact } from "@/routes/api/newsletter/subscribe";
-import { buildWelcomeEmail, escapeHtml } from "@/lib/newsletter-emails";
+import { buildWelcomeEmail } from "@/lib/newsletter-emails";
+import {
+  type ConfirmResultOptions,
+  confirmResultHtml,
+  confirmResultStatus,
+} from "@/lib/newsletter-confirm-page-lib";
 import { sendResendEmail } from "@/lib/newsletter-send.server";
 import { siteConfig } from "@/lib/site";
 
 // Minimal, on-brand confirmation landing page (light theme, matches the site).
-function resultPage(opts: {
-  ok: boolean;
-  heading: string;
-  body: string;
-  token?: string;
-  status?: number;
-}): Response {
-  const accent = opts.ok ? "#2f8f5b" : "#b4541f";
-  const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    <title>${opts.heading} — HeyClaude</title>
-  </head>
-  <body style="margin:0;background:#f7f5ef;font:400 16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#171614;">
-    <main style="max-width:480px;margin:0 auto;padding:80px 20px;text-align:center;">
-      <div style="font:600 13px/1.4 sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:#6b6a64;">HeyClaude</div>
-      <div style="margin-top:20px;font-size:40px;color:${accent};">${opts.ok ? "✓" : "—"}</div>
-      <h1 style="margin:12px 0 0;font-size:26px;font-weight:700;">${opts.heading}</h1>
-      <p style="margin:14px 0 0;color:#4d4c47;">${opts.body}</p>
-      ${opts.token ? `<form method="post" action="/api/public/newsletter/confirm" style="margin:28px 0 0;"><input type="hidden" name="token" value="${escapeHtml(opts.token)}" /><button type="submit" style="border:0;background:#171614;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px;cursor:pointer;">Confirm subscription</button></form>` : `<a href="${siteConfig.url}/browse" style="display:inline-block;margin-top:28px;background:#171614;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px;">Browse the directory</a>`}
-    </main>
-  </body>
-</html>`;
-  return new Response(html, {
-    status: opts.status ?? (opts.ok ? 200 : 400),
+function resultPage(opts: ConfirmResultOptions): Response {
+  return new Response(confirmResultHtml(opts), {
+    status: confirmResultStatus(opts.ok, opts.status),
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
   });
 }
