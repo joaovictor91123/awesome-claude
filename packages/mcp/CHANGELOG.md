@@ -1,5 +1,48 @@
 # @heyclaude/mcp Changelog
 
+## [0.12.0](https://github.com/joaovictor91123/awesome-claude/compare/mcp-v0.11.0...mcp-v0.12.0) (2026-07-14)
+
+
+### Features
+
+* **mcp,web:** extract artifact loader, fetch, signals, content, and brief libs ([#4514](https://github.com/joaovictor91123/awesome-claude/issues/4514)) ([2f58886](https://github.com/joaovictor91123/awesome-claude/commit/2f588864cb62da4ddb4fda55c0da80c8677eb5da))
+* **mcp,web:** extract client setup, OG render, dossier prefs, content query, and fetch libs ([#4526](https://github.com/joaovictor91123/awesome-claude/issues/4526)) ([3e6f717](https://github.com/joaovictor91123/awesome-claude/commit/3e6f7171ab67a383ddadb7e18b51d558e75deb0a))
+* **mcp,web:** extract compare, stats, safety, trust, asset, and content loader libs ([#4542](https://github.com/joaovictor91123/awesome-claude/issues/4542)) ([0141599](https://github.com/joaovictor91123/awesome-claude/commit/014159912f923acb2fe7fbd59888af8692650c1b))
+* **mcp,web:** extract discovery projection, artifact path, llms, and votes libs ([#4510](https://github.com/joaovictor91123/awesome-claude/issues/4510)) ([9c8507a](https://github.com/joaovictor91123/awesome-claude/commit/9c8507afdf49cbee00f866fe8a6973f6a9c5db8c))
+* **mcp:** extract CLI option parsing into cli-options-lib ([#4420](https://github.com/joaovictor91123/awesome-claude/issues/4420)) ([6d89af3](https://github.com/joaovictor91123/awesome-claude/commit/6d89af37097325397dd48836365ae040031a619c))
+* **mcp:** extract endpoint URL helpers into endpoint-url-lib ([#4426](https://github.com/joaovictor91123/awesome-claude/issues/4426)) ([c3aaf0e](https://github.com/joaovictor91123/awesome-claude/commit/c3aaf0e30647eadcd204a2f130d08df33fa58993))
+* **mcp:** extract MCP server wiring into server-lib ([#4435](https://github.com/joaovictor91123/awesome-claude/issues/4435)) ([c415c94](https://github.com/joaovictor91123/awesome-claude/commit/c415c947d643d92873173fc3ae561d422d9c622e))
+* **mcp:** extract platform helpers into platforms-lib ([#4423](https://github.com/joaovictor91123/awesome-claude/issues/4423)) ([042f1d4](https://github.com/joaovictor91123/awesome-claude/commit/042f1d40d78282d10a5f68cc4094471a74d56d8d))
+* **mcp:** extract registry asset helpers into registry-asset-lib ([#4475](https://github.com/joaovictor91123/awesome-claude/issues/4475)) ([2c0ca7c](https://github.com/joaovictor91123/awesome-claude/commit/2c0ca7c2b56a08d98f082332c827b25a8d44a1a4))
+* **mcp:** extract registry body excerpt helpers into registry-excerpt-lib ([#4473](https://github.com/joaovictor91123/awesome-claude/issues/4473)) ([50ba198](https://github.com/joaovictor91123/awesome-claude/commit/50ba198a48a911b79814339c9fab0744ecd8cf6c))
+* **mcp:** extract registry collection helpers into registry-collection-lib ([#4452](https://github.com/joaovictor91123/awesome-claude/issues/4452)) ([95c6046](https://github.com/joaovictor91123/awesome-claude/commit/95c60468b26c5cea6d9511bdffb4e13243d0a900))
+* **mcp:** extract registry filter helpers into registry-filter-lib ([#4472](https://github.com/joaovictor91123/awesome-claude/issues/4472)) ([adb54ba](https://github.com/joaovictor91123/awesome-claude/commit/adb54bad83a78e30a0cad08d6d063a18e64417fe))
+* **mcp:** extract registry normalization into registry-normalize-lib ([#4437](https://github.com/joaovictor91123/awesome-claude/issues/4437)) ([6688fdc](https://github.com/joaovictor91123/awesome-claude/commit/6688fdc59c3e45cfa6ad92652c579013eacdeb25))
+* **mcp:** extract registry prompt helpers into registry-prompts-lib ([#4417](https://github.com/joaovictor91123/awesome-claude/issues/4417)) ([f7bf7d4](https://github.com/joaovictor91123/awesome-claude/commit/f7bf7d452d6b8d10fb1550619898578e8fa711ec))
+* **mcp:** extract registry resource metadata into resource-metadata-lib ([#4448](https://github.com/joaovictor91123/awesome-claude/issues/4448)) ([3c70c5f](https://github.com/joaovictor91123/awesome-claude/commit/3c70c5f807bfc2a6f0ffaca0d471a33b7c9280a5))
+* **mcp:** extract registry response helpers into registry-response-lib ([#4444](https://github.com/joaovictor91123/awesome-claude/issues/4444)) ([107c184](https://github.com/joaovictor91123/awesome-claude/commit/107c184934b0248d991700e9e8b82f559d32f07d))
+* **mcp:** extract registry tool metadata into registry-tools-lib ([#4416](https://github.com/joaovictor91123/awesome-claude/issues/4416)) ([a3aaaec](https://github.com/joaovictor91123/awesome-claude/commit/a3aaaec1485bef8633cb1fcf75ec5f0ad225c25e))
+* **mcp:** extract registry trust, toolbox, and projection libs ([#4507](https://github.com/joaovictor91123/awesome-claude/issues/4507)) ([a47f6ba](https://github.com/joaovictor91123/awesome-claude/commit/a47f6baf864e60d27c6b27ebe9b127e436be8ae9))
+* **mcp:** extract remote proxy helpers into remote-proxy-lib ([#4402](https://github.com/joaovictor91123/awesome-claude/issues/4402)) ([9367774](https://github.com/joaovictor91123/awesome-claude/commit/9367774726a7a3f1af6dcab773ffc61813931668))
+* **mcp:** extract schemas into schemas-lib and add public-url wrapper ([#4501](https://github.com/joaovictor91123/awesome-claude/issues/4501)) ([05976e4](https://github.com/joaovictor91123/awesome-claude/commit/05976e48944fae2720644bdb70b3972f97f40c53))
+* **mcp:** extract search ranking helpers into search-ranking-lib ([#4399](https://github.com/joaovictor91123/awesome-claude/issues/4399)) ([5a826de](https://github.com/joaovictor91123/awesome-claude/commit/5a826dedea508b65048f7095e1fbe59e7448bcd7))
+* **mcp:** extract submission helpers into submissions-lib ([#4396](https://github.com/joaovictor91123/awesome-claude/issues/4396)) ([64f8ecf](https://github.com/joaovictor91123/awesome-claude/commit/64f8ecf690351e50de6536c19dc67f50055f53b3))
+* **registry:** centralize public URL userinfo validation helpers ([#4438](https://github.com/joaovictor91123/awesome-claude/issues/4438)) ([851badf](https://github.com/joaovictor91123/awesome-claude/commit/851badf45c4cbe0dd542589d3dc8ce4389aa649f))
+* **web,mcp:** extract API, MCP handler, site, token, and cache libs ([#4554](https://github.com/joaovictor91123/awesome-claude/issues/4554)) ([0e087f2](https://github.com/joaovictor91123/awesome-claude/commit/0e087f285cdaa6d509d3e28137324e2668759b86))
+
+
+### Bug Fixes
+
+* **mcp:** accept markdown-bullet retrieval_sources in submission validation ([#4930](https://github.com/joaovictor91123/awesome-claude/issues/4930)) ([4bd54bd](https://github.com/joaovictor91123/awesome-claude/commit/4bd54bd0806173dcb7f7749c49979aca5c31dc3c))
+* **mcp:** compare duplicate-search category case-insensitively ([#4931](https://github.com/joaovictor91123/awesome-claude/issues/4931)) ([bbbc94b](https://github.com/joaovictor91123/awesome-claude/commit/bbbc94b6ca96d375c946fbb9618223b0272b5536))
+* **mcp:** include shared keywords in related-entry reasons ([#4929](https://github.com/joaovictor91123/awesome-claude/issues/4929)) ([9442b76](https://github.com/joaovictor91123/awesome-claude/commit/9442b762ec227aef85134d3848fafe5ba974145a))
+* **mcp:** reject userinfo in endpoint URLs and align Raycast guards ([#4464](https://github.com/joaovictor91123/awesome-claude/issues/4464)) ([bd874f2](https://github.com/joaovictor91123/awesome-claude/commit/bd874f2344ff3e7ff3f62e9289ec8f07d0f1f4e3))
+* **mcp:** report related-graph count from the returned page ([#4936](https://github.com/joaovictor91123/awesome-claude/issues/4936)) ([c50b542](https://github.com/joaovictor91123/awesome-claude/commit/c50b542cf6b7e541176d2120e1e749944719f0a2))
+* **mcp:** treat empty array/object content as an absent copyable asset ([#4926](https://github.com/joaovictor91123/awesome-claude/issues/4926)) ([cd89f0f](https://github.com/joaovictor91123/awesome-claude/commit/cd89f0fa77329ce2c438b1cb0f16277862256599))
+* **registry:** reject credential-bearing GitHub profile contacts ([#4429](https://github.com/joaovictor91123/awesome-claude/issues/4429)) ([33b1c38](https://github.com/joaovictor91123/awesome-claude/commit/33b1c383885f54bcf472b1b857e0e7a61563040c))
+* **registry:** resolve embedded URL credential bypass in submission validation ([#4409](https://github.com/joaovictor91123/awesome-claude/issues/4409)) ([f6c8d1a](https://github.com/joaovictor91123/awesome-claude/commit/f6c8d1a6bb1738454a72986a65ad419f423ae183))
+* **registry:** strip URL userinfo during source canonicalization ([#4412](https://github.com/joaovictor91123/awesome-claude/issues/4412)) ([7ae3bb2](https://github.com/joaovictor91123/awesome-claude/commit/7ae3bb23c596e2778b209ba69f586f8442660572))
+
 ## [0.11.0](https://github.com/JSONbored/awesome-claude/compare/mcp-v0.10.0...mcp-v0.11.0) (2026-07-07)
 
 
