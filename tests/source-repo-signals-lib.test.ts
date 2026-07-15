@@ -5817,3 +5817,163 @@ describe("source-repo-signals-lib shouldRefreshSourceRepoSignal", () => {
     expect(shouldRefreshSourceRepoSignal(signal, now)).toBe(true);
   });
 });
+
+describe("source-repo-signals-lib branch edge cases", () => {
+  it("normalizeSourceRepoSignalRow coerces falsy fields to defaults", () => {
+    expect(
+      normalizeSourceRepoSignalRow({
+        repo: "",
+        stars: null,
+        forks: null,
+        repo_updated_at: null,
+        fetched_at: "2026-06-02",
+        status: "ok",
+        last_error: null,
+      }),
+    ).toEqual({
+      repo: "",
+      stars: null,
+      forks: null,
+      repoUpdatedAt: null,
+      fetchedAt: "2026-06-02",
+      status: "ok",
+      lastError: null,
+    });
+  });
+
+  it("applySourceRepoSignal returns the entry unchanged without a GitHub source repo", () => {
+    const entry = { repoUrl: "https://example.com/not-github", title: "x" };
+    const state: SourceRepoSignalState = {
+      available: true,
+      signals: new Map([
+        [
+          "demo/repo",
+          {
+            repo: "demo/repo",
+            stars: 1,
+            forks: 1,
+            repoUpdatedAt: "2026-06-01",
+            fetchedAt: "2026-06-02",
+            status: "ok",
+            lastError: null,
+          },
+        ],
+      ]),
+    };
+    expect(applySourceRepoSignal(entry, state)).toBe(entry);
+  });
+
+  it("applySourceRepoSignal strips volatile repo stats when no signal is cached", () => {
+    const entry = {
+      repoUrl: "https://github.com/no-signal/repo",
+      githubStars: 5,
+      githubForks: 2,
+      repoUpdatedAt: "old",
+      repoStats: { repository: "no-signal/repo", stars: 5 },
+      title: "keep",
+    };
+    const state: SourceRepoSignalState = {
+      available: true,
+      signals: new Map(),
+    };
+    const applied = applySourceRepoSignal(entry, state);
+    expect(applied.githubStars).toBeUndefined();
+    expect(applied.githubForks).toBeUndefined();
+    expect(applied.repoUpdatedAt).toBeUndefined();
+    expect(applied.repoStats).toBeUndefined();
+    expect(applied.title).toBe("keep");
+  });
+
+  it("applySourceRepoSignal strips volatile repo stats when the signal has no data", () => {
+    const entry = {
+      repoUrl: "https://github.com/empty/signal",
+      githubStars: 9,
+      repoStats: { repository: "empty/signal" },
+      title: "t",
+    };
+    const state: SourceRepoSignalState = {
+      available: true,
+      signals: new Map([
+        [
+          "empty/signal",
+          {
+            repo: "empty/signal",
+            stars: null,
+            forks: null,
+            repoUpdatedAt: null,
+            fetchedAt: "2026-06-02",
+            status: "ok",
+            lastError: null,
+          },
+        ],
+      ]),
+    };
+    const applied = applySourceRepoSignal(entry, state);
+    expect(applied.githubStars).toBeUndefined();
+    expect(applied.repoStats).toBeUndefined();
+  });
+
+  it("applySourceRepoSignal applies a forks-only signal and keeps existing repoStats fields", () => {
+    const entry = {
+      repoStats: {
+        url: "https://github.com/partial/repo",
+        repository: "partial/repo",
+        appliesTo: "custom",
+        label: "Custom label",
+      },
+      title: "t",
+    };
+    const state: SourceRepoSignalState = {
+      available: true,
+      signals: new Map([
+        [
+          "partial/repo",
+          {
+            repo: "partial/repo",
+            stars: null,
+            forks: 3,
+            repoUpdatedAt: null,
+            fetchedAt: "2026-06-02",
+            status: "ok",
+            lastError: null,
+          },
+        ],
+      ]),
+    };
+    const applied = applySourceRepoSignal(entry, state);
+    expect(applied.githubStars).toBeNull();
+    expect(applied.githubForks).toBe(3);
+    expect(applied.repoStats?.forks).toBe(3);
+    expect(applied.repoStats?.stars).toBeUndefined();
+    expect(applied.repoStats?.updatedAt).toBeUndefined();
+    expect(applied.repoStats?.repository).toBe("partial/repo");
+    expect(applied.repoStats?.url).toBe("https://github.com/partial/repo");
+    expect(applied.repoStats?.appliesTo).toBe("custom");
+    expect(applied.repoStats?.label).toBe("Custom label");
+  });
+
+  it("applySourceRepoSignal applies a stars-and-date signal without forks", () => {
+    const entry = { repoUrl: "https://github.com/partial2/repo", title: "t" };
+    const state: SourceRepoSignalState = {
+      available: true,
+      signals: new Map([
+        [
+          "partial2/repo",
+          {
+            repo: "partial2/repo",
+            stars: 7,
+            forks: null,
+            repoUpdatedAt: "2026-06-01",
+            fetchedAt: "2026-06-02",
+            status: "ok",
+            lastError: null,
+          },
+        ],
+      ]),
+    };
+    const applied = applySourceRepoSignal(entry, state);
+    expect(applied.repoStats?.stars).toBe(7);
+    expect(applied.repoStats?.forks).toBeUndefined();
+    expect(applied.repoStats?.updatedAt).toBe("2026-06-01");
+  });
+});
