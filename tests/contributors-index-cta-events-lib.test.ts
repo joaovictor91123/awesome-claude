@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CONTRIBUTORS_INDEX_SURFACE,
+  contributorsIndexGithubAnalyticsData,
+  contributorsIndexGithubAnalyticsEvent,
   contributorsIndexProfileAnalyticsData,
   contributorsIndexProfileAnalyticsEvent,
   contributorsIndexSubmitAnalyticsData,
@@ -29,6 +31,32 @@ describe("contributors index cta events lib", () => {
       surface: CONTRIBUTORS_INDEX_SURFACE,
       contributorCount: 24,
       totalAccepted: 310,
+    });
+  });
+
+  it("builds contributors index GitHub egress analytics", () => {
+    expect(contributorsIndexGithubAnalyticsEvent()).toBe(
+      "contributors_index_github_click",
+    );
+    expect(
+      contributorsIndexGithubAnalyticsData("alice", 12, "featured", null, 24),
+    ).toEqual({
+      surface: CONTRIBUTORS_INDEX_SURFACE,
+      contributorSlug: "alice",
+      acceptedCount: 12,
+      variant: "featured",
+      rowIndex: null,
+      contributorCount: 24,
+    });
+    expect(
+      contributorsIndexGithubAnalyticsData("bob", 4, "card", 2, 24),
+    ).toEqual({
+      surface: CONTRIBUTORS_INDEX_SURFACE,
+      contributorSlug: "bob",
+      acceptedCount: 4,
+      variant: "card",
+      rowIndex: 2,
+      contributorCount: 24,
     });
   });
 });

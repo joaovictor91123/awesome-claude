@@ -5,6 +5,8 @@ export {
   CONTRIBUTOR_PROFILE_SURFACE,
   contributorProfileCategoryAnalyticsData,
   contributorProfileCategoryAnalyticsEvent,
+  contributorProfileGithubAnalyticsData,
+  contributorProfileGithubAnalyticsEvent,
   contributorProfileIndexAnalyticsData,
   contributorProfileIndexAnalyticsEvent,
   contributorProfilePeerAnalyticsData,
@@ -13,4 +15,7 @@ export {
   contributorProfileSubmitAnalyticsEvent,
   contributorProfileSubmitterAnalyticsData,
   contributorProfileSubmitterAnalyticsEvent,
+  contributorProfileTraceEgressAnalyticsData,
+  contributorProfileTraceEgressAnalyticsEvent,
+  type ContributorProfileTraceDestination,
 } from "@/lib/contributor-profile-cta-events-lib";

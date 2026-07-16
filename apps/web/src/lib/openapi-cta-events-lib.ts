@@ -7,7 +7,7 @@
 
 export const OPENAPI_SURFACE = "openapi";
 
-export type OpenApiCopyKind = "curl" | "response";
+export type OpenApiCopyKind = "curl" | "response" | "client-example";
 
 export function openApiCopyAnalyticsEvent(): string {
   return "openapi_copy_click";

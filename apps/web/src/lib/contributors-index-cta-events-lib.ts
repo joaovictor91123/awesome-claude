@@ -40,3 +40,26 @@ export function contributorsIndexSubmitAnalyticsData(
     totalAccepted,
   };
 }
+
+export type ContributorsIndexGithubVariant = "featured" | "card";
+
+export function contributorsIndexGithubAnalyticsEvent(): string {
+  return "contributors_index_github_click";
+}
+
+export function contributorsIndexGithubAnalyticsData(
+  contributorSlug: string,
+  acceptedCount: number,
+  variant: ContributorsIndexGithubVariant,
+  rowIndex: number | null,
+  contributorCount: number,
+) {
+  return {
+    surface: CONTRIBUTORS_INDEX_SURFACE,
+    contributorSlug,
+    acceptedCount,
+    variant,
+    rowIndex,
+    contributorCount,
+  };
+}

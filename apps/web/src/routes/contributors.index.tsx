@@ -3,6 +3,8 @@ import { Github } from "lucide-react";
 import { CONTRIBUTORS } from "@/data/contributors";
 import { trackEvent } from "@/lib/analytics";
 import {
+  contributorsIndexGithubAnalyticsData,
+  contributorsIndexGithubAnalyticsEvent,
   contributorsIndexProfileAnalyticsData,
   contributorsIndexProfileAnalyticsEvent,
   contributorsIndexSubmitAnalyticsData,
@@ -95,6 +97,18 @@ function ContributorsPage() {
                 href={top.github}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() =>
+                  trackEvent(
+                    contributorsIndexGithubAnalyticsEvent(),
+                    contributorsIndexGithubAnalyticsData(
+                      top.slug,
+                      top.acceptedCount,
+                      "featured",
+                      null,
+                      sorted.length,
+                    ),
+                  )
+                }
                 className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-background px-3 text-sm text-ink hover:bg-surface-2"
               >
                 <Github className="h-3.5 w-3.5" /> GitHub
@@ -137,7 +151,19 @@ function ContributorsPage() {
                 href={c.github}
                 target="_blank"
                 rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  trackEvent(
+                    contributorsIndexGithubAnalyticsEvent(),
+                    contributorsIndexGithubAnalyticsData(
+                      c.slug,
+                      c.acceptedCount,
+                      "card",
+                      rowIndex,
+                      sorted.length,
+                    ),
+                  );
+                }}
                 className="text-ink-subtle hover:text-ink"
                 aria-label={`${c.handle} on GitHub`}
               >

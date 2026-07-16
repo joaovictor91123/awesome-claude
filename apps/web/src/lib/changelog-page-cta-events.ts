@@ -7,6 +7,8 @@ export {
   changelogDiffEgressAnalyticsEvent,
   changelogFeedEgressAnalyticsData,
   changelogFeedEgressAnalyticsEvent,
+  changelogPollCopyAnalyticsData,
+  changelogPollCopyAnalyticsEvent,
   changelogQualityEgressAnalyticsData,
   changelogQualityEgressAnalyticsEvent,
   changelogReadMoreAnalyticsData,

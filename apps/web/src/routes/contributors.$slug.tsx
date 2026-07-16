@@ -31,6 +31,8 @@ import {
 import {
   contributorProfileCategoryAnalyticsData,
   contributorProfileCategoryAnalyticsEvent,
+  contributorProfileGithubAnalyticsData,
+  contributorProfileGithubAnalyticsEvent,
   contributorProfileIndexAnalyticsData,
   contributorProfileIndexAnalyticsEvent,
   contributorProfilePeerAnalyticsData,
@@ -39,6 +41,9 @@ import {
   contributorProfileSubmitAnalyticsEvent,
   contributorProfileSubmitterAnalyticsData,
   contributorProfileSubmitterAnalyticsEvent,
+  contributorProfileTraceEgressAnalyticsData,
+  contributorProfileTraceEgressAnalyticsEvent,
+  type ContributorProfileTraceDestination,
 } from "@/lib/contributor-profile-cta-events";
 import { contributorPersonJsonLd } from "@/lib/contributor-person-jsonld-lib";
 import { ogImageUrl } from "@/lib/og-image";
@@ -140,6 +145,12 @@ function ContributorPage() {
                 href={contributor.github}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() =>
+                  trackEvent(
+                    contributorProfileGithubAnalyticsEvent(),
+                    contributorProfileGithubAnalyticsData(contributor.slug, acceptedEntries.length),
+                  )
+                }
                 className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-0.5 text-ink-muted hover:text-ink"
               >
                 <Github className="h-3 w-3" /> GitHub <ArrowUpRight className="h-3 w-3" />
@@ -407,6 +418,18 @@ function ContributionRow({
                 href={submitter.href}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() =>
+                  trackEvent(
+                    contributorProfileTraceEgressAnalyticsEvent(),
+                    contributorProfileTraceEgressAnalyticsData(
+                      contributor.slug,
+                      "external-submitter",
+                      role,
+                      rowIndex,
+                      rowCount,
+                    ),
+                  )
+                }
                 className="text-ink-muted hover:text-ink"
               >
                 {submitter.label}
@@ -440,13 +463,39 @@ function ContributionRow({
       {(entry.sourceSubmissionUrl || entry.importPrUrl || entry.sourceUrl) && (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           {entry.sourceSubmissionUrl && (
-            <ExternalTraceLink href={entry.sourceSubmissionUrl} label="Original submission" />
+            <ExternalTraceLink
+              href={entry.sourceSubmissionUrl}
+              label="Original submission"
+              destination="original-submission"
+              contributorSlug={contributor.slug}
+              role={role}
+              rowIndex={rowIndex}
+              rowCount={rowCount}
+            />
           )}
           {entry.importPrUrl && (
-            <ExternalTraceLink href={entry.importPrUrl} label="Import PR" icon={GitPullRequest} />
+            <ExternalTraceLink
+              href={entry.importPrUrl}
+              label="Import PR"
+              icon={GitPullRequest}
+              destination="import-pr"
+              contributorSlug={contributor.slug}
+              role={role}
+              rowIndex={rowIndex}
+              rowCount={rowCount}
+            />
           )}
           {entry.sourceUrl && (
-            <ExternalTraceLink href={entry.sourceUrl} label="Source" icon={ArrowUpRight} />
+            <ExternalTraceLink
+              href={entry.sourceUrl}
+              label="Source"
+              icon={ArrowUpRight}
+              destination="source"
+              contributorSlug={contributor.slug}
+              role={role}
+              rowIndex={rowIndex}
+              rowCount={rowCount}
+            />
           )}
         </div>
       )}
@@ -458,16 +507,38 @@ function ExternalTraceLink({
   href,
   label,
   icon: Icon = ArrowUpRight,
+  destination,
+  contributorSlug,
+  role,
+  rowIndex,
+  rowCount,
 }: {
   href: string;
   label: string;
   icon?: ElementType;
+  destination: ContributorProfileTraceDestination;
+  contributorSlug: string;
+  role: string;
+  rowIndex: number;
+  rowCount: number;
 }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noreferrer"
+      onClick={() =>
+        trackEvent(
+          contributorProfileTraceEgressAnalyticsEvent(),
+          contributorProfileTraceEgressAnalyticsData(
+            contributorSlug,
+            destination,
+            role,
+            rowIndex,
+            rowCount,
+          ),
+        )
+      }
       className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-ink-muted hover:border-border-strong hover:text-ink"
     >
       {label}

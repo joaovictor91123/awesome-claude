@@ -15,6 +15,8 @@ import {
   changelogDiffEgressAnalyticsEvent,
   changelogFeedEgressAnalyticsData,
   changelogFeedEgressAnalyticsEvent,
+  changelogPollCopyAnalyticsData,
+  changelogPollCopyAnalyticsEvent,
   changelogQualityEgressAnalyticsData,
   changelogQualityEgressAnalyticsEvent,
   changelogReadMoreAnalyticsData,
@@ -23,6 +25,7 @@ import {
   changelogStreamFilterAnalyticsEvent,
   type ChangelogStreamFilter,
 } from "@/lib/changelog-page-cta-events";
+import { CopyButton } from "@/components/copy-button";
 import { stringifyJsonLd } from "@/lib/json-ld";
 import { changelogItemListJsonLd } from "@/lib/changelog-jsonld-lib";
 import { absoluteUrl } from "@/lib/seo";
@@ -324,6 +327,15 @@ function ChangelogPage() {
               SHA-256.
             </p>
             <pre className="mt-3 overflow-x-auto rounded-md bg-background p-3 font-mono text-[11px] text-ink">
+              <div className="mb-2 flex justify-end">
+                <CopyButton
+                  value="curl https://heyclau.de/api/registry/diff?since=2026-05-19"
+                  label="Copy"
+                  size="sm"
+                  event={changelogPollCopyAnalyticsEvent()}
+                  eventData={changelogPollCopyAnalyticsData(items.length)}
+                />
+              </div>
               {`curl https://heyclau.de/api/registry/diff?since=2026-05-19`}
             </pre>
           </div>
