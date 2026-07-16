@@ -9,6 +9,8 @@ import {
   submitDraftCopyAnalyticsEvent,
   submitEgressAnalyticsData,
   submitEgressAnalyticsEvent,
+  submitPreflightNextActionAnalyticsData,
+  submitPreflightNextActionAnalyticsEvent,
   submitPreflightRetryAnalyticsData,
   submitPreflightRetryAnalyticsEvent,
   submitStartAnalyticsData,
@@ -100,6 +102,30 @@ describe("submit cta events lib", () => {
       surface: SUBMIT_SURFACE,
       category: "hooks",
       source: "wizard",
+    });
+    expect(submitPreflightNextActionAnalyticsEvent()).toBe(
+      "submit_preflight_next_action_click",
+    );
+    expect(submitPreflightNextActionAnalyticsData("mcp", "route_away")).toEqual(
+      {
+        surface: SUBMIT_SURFACE,
+        category: "mcp",
+        routeSuggestion: "route_away",
+      },
+    );
+    expect(
+      submitPreflightNextActionAnalyticsData("skills", "fix_required"),
+    ).toEqual({
+      surface: SUBMIT_SURFACE,
+      category: "skills",
+      routeSuggestion: "fix_required",
+    });
+    expect(
+      submitPreflightNextActionAnalyticsData("hooks", "manual_review"),
+    ).toEqual({
+      surface: SUBMIT_SURFACE,
+      category: "hooks",
+      routeSuggestion: "manual_review",
     });
   });
 });
