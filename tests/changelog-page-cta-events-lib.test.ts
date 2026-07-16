@@ -5,6 +5,8 @@ import {
   changelogDiffEgressAnalyticsEvent,
   changelogFeedEgressAnalyticsData,
   changelogFeedEgressAnalyticsEvent,
+  changelogPollCopyAnalyticsData,
+  changelogPollCopyAnalyticsEvent,
   changelogQualityEgressAnalyticsData,
   changelogQualityEgressAnalyticsEvent,
   changelogReadMoreAnalyticsData,
@@ -63,6 +65,12 @@ describe("changelog page cta events lib", () => {
       surface: CHANGELOG_PAGE_SURFACE,
       releaseStream: "release",
       rowIndex: 1,
+      matchCount: 12,
+    });
+    expect(changelogPollCopyAnalyticsEvent()).toBe("changelog_poll_copy_click");
+    expect(changelogPollCopyAnalyticsData(12)).toEqual({
+      surface: CHANGELOG_PAGE_SURFACE,
+      command: "diff-since",
       matchCount: 12,
     });
   });

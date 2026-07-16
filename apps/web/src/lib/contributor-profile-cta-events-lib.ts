@@ -93,3 +93,45 @@ export function contributorProfileSubmitterAnalyticsData(
     rowCount,
   };
 }
+
+export function contributorProfileGithubAnalyticsEvent(): string {
+  return "contributor_profile_github_click";
+}
+
+export function contributorProfileGithubAnalyticsData(
+  contributorSlug: string,
+  acceptedCount: number,
+) {
+  return {
+    surface: CONTRIBUTOR_PROFILE_SURFACE,
+    contributorSlug,
+    acceptedCount,
+  };
+}
+
+export type ContributorProfileTraceDestination =
+  | "original-submission"
+  | "import-pr"
+  | "source"
+  | "external-submitter";
+
+export function contributorProfileTraceEgressAnalyticsEvent(): string {
+  return "contributor_profile_trace_egress_click";
+}
+
+export function contributorProfileTraceEgressAnalyticsData(
+  contributorSlug: string,
+  destination: ContributorProfileTraceDestination,
+  role: string,
+  rowIndex: number,
+  rowCount: number,
+) {
+  return {
+    surface: CONTRIBUTOR_PROFILE_SURFACE,
+    contributorSlug,
+    destination,
+    role,
+    rowIndex,
+    rowCount,
+  };
+}

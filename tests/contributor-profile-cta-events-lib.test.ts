@@ -3,6 +3,8 @@ import {
   CONTRIBUTOR_PROFILE_SURFACE,
   contributorProfileCategoryAnalyticsData,
   contributorProfileCategoryAnalyticsEvent,
+  contributorProfileGithubAnalyticsData,
+  contributorProfileGithubAnalyticsEvent,
   contributorProfileIndexAnalyticsData,
   contributorProfileIndexAnalyticsEvent,
   contributorProfilePeerAnalyticsData,
@@ -11,6 +13,8 @@ import {
   contributorProfileSubmitAnalyticsEvent,
   contributorProfileSubmitterAnalyticsData,
   contributorProfileSubmitterAnalyticsEvent,
+  contributorProfileTraceEgressAnalyticsData,
+  contributorProfileTraceEgressAnalyticsEvent,
 } from "@/lib/contributor-profile-cta-events-lib";
 
 describe("contributor profile cta events lib", () => {
@@ -74,6 +78,33 @@ describe("contributor profile cta events lib", () => {
       role: "submitted",
       rowIndex: 2,
       rowCount: 6,
+    });
+    expect(contributorProfileGithubAnalyticsEvent()).toBe(
+      "contributor_profile_github_click",
+    );
+    expect(contributorProfileGithubAnalyticsData("alice", 12)).toEqual({
+      surface: CONTRIBUTOR_PROFILE_SURFACE,
+      contributorSlug: "alice",
+      acceptedCount: 12,
+    });
+    expect(contributorProfileTraceEgressAnalyticsEvent()).toBe(
+      "contributor_profile_trace_egress_click",
+    );
+    expect(
+      contributorProfileTraceEgressAnalyticsData(
+        "alice",
+        "import-pr",
+        "authored",
+        1,
+        4,
+      ),
+    ).toEqual({
+      surface: CONTRIBUTOR_PROFILE_SURFACE,
+      contributorSlug: "alice",
+      destination: "import-pr",
+      role: "authored",
+      rowIndex: 1,
+      rowCount: 4,
     });
   });
 });

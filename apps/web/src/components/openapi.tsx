@@ -271,8 +271,21 @@ export function OpenApiPlayground({ endpoint }: { endpoint: OpenApiEndpoint }) {
             <div className="space-y-2 rounded-md border border-border bg-background p-3">
               {endpoint.clientExamples.map((example) => (
                 <div key={example.label}>
-                  <div className="mb-1 text-[10px] uppercase tracking-wider text-ink-subtle">
-                    {example.label}
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <div className="text-[10px] uppercase tracking-wider text-ink-subtle">
+                      {example.label}
+                    </div>
+                    <CopyButton
+                      value={example.code}
+                      label="Copy"
+                      size="sm"
+                      event={openApiCopyAnalyticsEvent()}
+                      eventData={openApiCopyAnalyticsData(
+                        endpoint.id,
+                        endpoint.method,
+                        "client-example",
+                      )}
+                    />
                   </div>
                   <pre className="overflow-auto font-mono text-[11px] text-ink">
                     <code>{example.code}</code>

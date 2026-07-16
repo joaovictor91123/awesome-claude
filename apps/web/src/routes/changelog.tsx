@@ -15,6 +15,8 @@ import {
   changelogDiffEgressAnalyticsEvent,
   changelogFeedEgressAnalyticsData,
   changelogFeedEgressAnalyticsEvent,
+  changelogPollCopyAnalyticsData,
+  changelogPollCopyAnalyticsEvent,
   changelogQualityEgressAnalyticsData,
   changelogQualityEgressAnalyticsEvent,
   changelogReadMoreAnalyticsData,
@@ -23,6 +25,7 @@ import {
   changelogStreamFilterAnalyticsEvent,
   type ChangelogStreamFilter,
 } from "@/lib/changelog-page-cta-events";
+import { CopyButton } from "@/components/copy-button";
 import { stringifyJsonLd } from "@/lib/json-ld";
 import { changelogItemListJsonLd } from "@/lib/changelog-jsonld-lib";
 import { absoluteUrl } from "@/lib/seo";
@@ -323,9 +326,20 @@ function ChangelogPage() {
               Poll the diff endpoint or subscribe via your feed reader. Every payload carries a
               SHA-256.
             </p>
-            <pre className="mt-3 overflow-x-auto rounded-md bg-background p-3 font-mono text-[11px] text-ink">
-              {`curl https://heyclau.de/api/registry/diff?since=2026-05-19`}
-            </pre>
+            <div className="mt-3 overflow-hidden rounded-md bg-background">
+              <div className="flex justify-end border-b border-border px-3 py-1.5">
+                <CopyButton
+                  value="curl https://heyclau.de/api/registry/diff?since=2026-05-19"
+                  label="Copy"
+                  size="sm"
+                  event={changelogPollCopyAnalyticsEvent()}
+                  eventData={changelogPollCopyAnalyticsData(items.length)}
+                />
+              </div>
+              <pre className="overflow-x-auto p-3 font-mono text-[11px] text-ink">
+                {`curl https://heyclau.de/api/registry/diff?since=2026-05-19`}
+              </pre>
+            </div>
           </div>
 
           <div className="rounded-xl border border-border bg-surface p-5">

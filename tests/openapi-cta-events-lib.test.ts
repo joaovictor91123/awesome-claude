@@ -26,6 +26,14 @@ describe("openapi cta events lib", () => {
         copyKind: "response",
       },
     );
+    expect(
+      openApiCopyAnalyticsData("list-entries", "GET", "client-example"),
+    ).toEqual({
+      surface: OPENAPI_SURFACE,
+      endpointId: "list-entries",
+      method: "GET",
+      copyKind: "client-example",
+    });
     expect(openApiSendAnalyticsEvent()).toBe("openapi_send_click");
     expect(openApiSendAnalyticsData("search", "GET", true)).toEqual({
       surface: OPENAPI_SURFACE,

@@ -87,3 +87,15 @@ export function changelogDiffEgressAnalyticsData(
     matchCount,
   };
 }
+
+export function changelogPollCopyAnalyticsEvent(): string {
+  return "changelog_poll_copy_click";
+}
+
+export function changelogPollCopyAnalyticsData(matchCount: number) {
+  return {
+    surface: CHANGELOG_PAGE_SURFACE,
+    command: "diff-since",
+    matchCount,
+  };
+}
