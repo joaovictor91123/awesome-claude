@@ -24,6 +24,9 @@ export {
   jobsIndexPostAnalyticsEvent,
   jobsIndexSortSelectAnalyticsData,
   jobsIndexSortSelectAnalyticsEvent,
+  jobsIndexStatAnalyticsData,
+  jobsIndexStatAnalyticsEvent,
+  jobsIndexStatFilterPatch,
   type JobsDetailEgressDestination,
   type JobsDetailIndexSource,
   type JobsErrorSurface,
@@ -31,4 +34,6 @@ export {
   type JobsIndexJobVariant,
   type JobsIndexPostSource,
   type JobsIndexSortMode,
+  type JobsIndexStatFilterPatch,
+  type JobsIndexStatId,
 } from "@/lib/jobs-hub-cta-events-lib";

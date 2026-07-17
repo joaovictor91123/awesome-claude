@@ -2,6 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { toneClass } from "@/lib/browse-rollout-tone-lib";
 import type { BrowseFreshnessDistributionState } from "@/lib/browse-freshness-distribution";
 import {
+  browseFreshnessBucketAnalyticsData,
+  browseFreshnessBucketAnalyticsEvent,
+  browseFreshnessBucketSignal,
   browseFreshnessStaleEntryAnalyticsData,
   browseFreshnessStaleEntryAnalyticsEvent,
   parseBrowseFreshnessEntryRef,
@@ -31,27 +34,47 @@ export function BrowseFreshnessDistributionPanel({
       </div>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {state.buckets.map((bucket) => (
-          <article key={bucket.id} className="rounded-md border border-border bg-background p-2.5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-ink">{bucket.label}</p>
-                <p className="mt-0.5 text-[11px] text-ink-muted">{bucket.rangeLabel}</p>
+        {state.buckets.map((bucket) => {
+          const signal = browseFreshnessBucketSignal(bucket.id);
+          return (
+            <button
+              key={bucket.id}
+              type="button"
+              disabled={!signal}
+              onClick={() => {
+                if (!signal) return;
+                trackEvent(
+                  browseFreshnessBucketAnalyticsEvent(),
+                  browseFreshnessBucketAnalyticsData(
+                    bucket.id,
+                    bucket.count,
+                    bucket.percent,
+                    state.scannedCount,
+                  ),
+                );
+              }}
+              className="rounded-md border border-border bg-background p-2.5 text-left transition-colors duration-200 ease-out hover:border-border-strong hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-100"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-ink">{bucket.label}</p>
+                  <p className="mt-0.5 text-[11px] text-ink-muted">{bucket.rangeLabel}</p>
+                </div>
+                <span
+                  className={cn(
+                    "inline-flex rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
+                    toneClass(bucket.tone),
+                  )}
+                >
+                  {bucket.percent}%
+                </span>
               </div>
-              <span
-                className={cn(
-                  "inline-flex rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
-                  toneClass(bucket.tone),
-                )}
-              >
-                {bucket.percent}%
-              </span>
-            </div>
-            <p className="mt-1.5 font-mono text-[11px] text-ink">
-              {bucket.count} {bucket.count === 1 ? "entry" : "entries"}
-            </p>
-          </article>
-        ))}
+              <p className="mt-1.5 font-mono text-[11px] text-ink">
+                {bucket.count} {bucket.count === 1 ? "entry" : "entries"}
+              </p>
+            </button>
+          );
+        })}
       </div>
 
       {state.staleEntries.length > 0 ? (

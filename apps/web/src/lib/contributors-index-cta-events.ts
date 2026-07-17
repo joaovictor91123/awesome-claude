@@ -3,11 +3,18 @@
  */
 export {
   CONTRIBUTORS_INDEX_SURFACE,
+  contributorsIndexFeaturedProfileAnalyticsData,
+  contributorsIndexFeaturedProfileAnalyticsEvent,
   contributorsIndexGithubAnalyticsData,
   contributorsIndexGithubAnalyticsEvent,
   contributorsIndexProfileAnalyticsData,
   contributorsIndexProfileAnalyticsEvent,
+  contributorsIndexStatAnalyticsData,
+  contributorsIndexStatAnalyticsEvent,
+  contributorsIndexStatDestination,
   contributorsIndexSubmitAnalyticsData,
   contributorsIndexSubmitAnalyticsEvent,
   type ContributorsIndexGithubVariant,
+  type ContributorsIndexStatDestination,
+  type ContributorsIndexStatId,
 } from "@/lib/contributors-index-cta-events-lib";

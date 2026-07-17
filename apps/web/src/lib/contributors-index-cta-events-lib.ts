@@ -63,3 +63,60 @@ export function contributorsIndexGithubAnalyticsData(
     contributorCount,
   };
 }
+
+export type ContributorsIndexStatId = "contributors" | "accepted-entries";
+
+export type ContributorsIndexStatDestination = {
+  to: "/contributors" | "/browse";
+  hash?: string;
+};
+
+export function contributorsIndexStatAnalyticsEvent(): string {
+  return "contributors_index_stat_click";
+}
+
+export function contributorsIndexStatAnalyticsData(
+  statId: string,
+  value: number,
+  contributorCount: number,
+  totalAccepted: number,
+) {
+  return {
+    surface: CONTRIBUTORS_INDEX_SURFACE,
+    statId,
+    value,
+    contributorCount,
+    totalAccepted,
+  };
+}
+
+/** Map a contributors index headline stat to an in-app destination. */
+export function contributorsIndexStatDestination(
+  statId: string,
+): ContributorsIndexStatDestination | null {
+  switch (statId) {
+    case "contributors":
+      return { to: "/contributors", hash: "contributor-grid" };
+    case "accepted-entries":
+      return { to: "/browse" };
+    default:
+      return null;
+  }
+}
+
+export function contributorsIndexFeaturedProfileAnalyticsEvent(): string {
+  return "contributors_index_featured_profile_click";
+}
+
+export function contributorsIndexFeaturedProfileAnalyticsData(
+  contributorSlug: string,
+  acceptedCount: number,
+  contributorCount: number,
+) {
+  return {
+    surface: CONTRIBUTORS_INDEX_SURFACE,
+    contributorSlug,
+    acceptedCount,
+    contributorCount,
+  };
+}

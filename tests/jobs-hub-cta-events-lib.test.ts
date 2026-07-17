@@ -22,6 +22,9 @@ import {
   jobsIndexPostAnalyticsEvent,
   jobsIndexSortSelectAnalyticsData,
   jobsIndexSortSelectAnalyticsEvent,
+  jobsIndexStatAnalyticsData,
+  jobsIndexStatAnalyticsEvent,
+  jobsIndexStatFilterPatch,
 } from "@/lib/jobs-hub-cta-events-lib";
 
 describe("jobs hub cta events lib", () => {
@@ -143,5 +146,29 @@ describe("jobs hub cta events lib", () => {
       jobSlug: "senior-mcp",
       tier: "featured",
     });
+  });
+
+  it("maps jobs index headline stats to filter patches", () => {
+    expect(jobsIndexStatAnalyticsEvent()).toBe("jobs_index_stat_click");
+    expect(jobsIndexStatAnalyticsData("remote", 8, 24)).toEqual({
+      surface: JOBS_INDEX_SURFACE,
+      statId: "remote",
+      count: 8,
+      jobCount: 24,
+    });
+    expect(jobsIndexStatFilterPatch("total")).toEqual({
+      q: "",
+      tier: "all",
+      remote: "all",
+      type: "all",
+      freshOnly: false,
+      featuredOnly: false,
+    });
+    expect(jobsIndexStatFilterPatch("remote")).toEqual({ remote: "remote" });
+    expect(jobsIndexStatFilterPatch("fresh")).toEqual({ freshOnly: true });
+    expect(jobsIndexStatFilterPatch("featured")).toEqual({
+      featuredOnly: true,
+    });
+    expect(jobsIndexStatFilterPatch("unknown")).toBeNull();
   });
 });

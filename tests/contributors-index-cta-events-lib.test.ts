@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   CONTRIBUTORS_INDEX_SURFACE,
+  contributorsIndexFeaturedProfileAnalyticsData,
+  contributorsIndexFeaturedProfileAnalyticsEvent,
   contributorsIndexGithubAnalyticsData,
   contributorsIndexGithubAnalyticsEvent,
   contributorsIndexProfileAnalyticsData,
   contributorsIndexProfileAnalyticsEvent,
+  contributorsIndexStatAnalyticsData,
+  contributorsIndexStatAnalyticsEvent,
+  contributorsIndexStatDestination,
   contributorsIndexSubmitAnalyticsData,
   contributorsIndexSubmitAnalyticsEvent,
 } from "@/lib/contributors-index-cta-events-lib";
@@ -56,6 +61,40 @@ describe("contributors index cta events lib", () => {
       acceptedCount: 4,
       variant: "card",
       rowIndex: 2,
+      contributorCount: 24,
+    });
+  });
+
+  it("maps contributors index headline stats and featured profile egress", () => {
+    expect(contributorsIndexStatAnalyticsEvent()).toBe(
+      "contributors_index_stat_click",
+    );
+    expect(
+      contributorsIndexStatAnalyticsData("contributors", 24, 24, 310),
+    ).toEqual({
+      surface: CONTRIBUTORS_INDEX_SURFACE,
+      statId: "contributors",
+      value: 24,
+      contributorCount: 24,
+      totalAccepted: 310,
+    });
+    expect(contributorsIndexStatDestination("contributors")).toEqual({
+      to: "/contributors",
+      hash: "contributor-grid",
+    });
+    expect(contributorsIndexStatDestination("accepted-entries")).toEqual({
+      to: "/browse",
+    });
+    expect(contributorsIndexStatDestination("unknown")).toBeNull();
+    expect(contributorsIndexFeaturedProfileAnalyticsEvent()).toBe(
+      "contributors_index_featured_profile_click",
+    );
+    expect(
+      contributorsIndexFeaturedProfileAnalyticsData("alice", 12, 24),
+    ).toEqual({
+      surface: CONTRIBUTORS_INDEX_SURFACE,
+      contributorSlug: "alice",
+      acceptedCount: 12,
       contributorCount: 24,
     });
   });

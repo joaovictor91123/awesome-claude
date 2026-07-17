@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   BROWSE_FRESHNESS_DISTRIBUTION_SURFACE,
   BROWSE_THEME_DISTRIBUTION_SURFACE,
+  browseFreshnessBucketAnalyticsData,
+  browseFreshnessBucketAnalyticsEvent,
+  browseFreshnessBucketSignal,
   browseFreshnessStaleEntryAnalyticsData,
   browseFreshnessStaleEntryAnalyticsEvent,
   browseThemeDistributionSelectAnalyticsData,
@@ -46,5 +49,23 @@ describe("browse distribution cta events lib", () => {
       slug: "browser",
     });
     expect(parseBrowseFreshnessEntryRef("invalid")).toBeNull();
+  });
+
+  it("maps browse freshness bucket clicks to analytics signals", () => {
+    expect(browseFreshnessBucketAnalyticsEvent()).toBe(
+      "browse_freshness_bucket_click",
+    );
+    expect(browseFreshnessBucketAnalyticsData("fresh", 12, 40, 30)).toEqual({
+      surface: BROWSE_FRESHNESS_DISTRIBUTION_SURFACE,
+      bucketId: "fresh",
+      count: 12,
+      percent: 40,
+      scannedCount: 30,
+    });
+    expect(browseFreshnessBucketSignal("fresh")).toBe("fresh");
+    expect(browseFreshnessBucketSignal("recent")).toBe("recent");
+    expect(browseFreshnessBucketSignal("aging")).toBe("aging");
+    expect(browseFreshnessBucketSignal("stale")).toBe("stale");
+    expect(browseFreshnessBucketSignal("unknown")).toBeNull();
   });
 });

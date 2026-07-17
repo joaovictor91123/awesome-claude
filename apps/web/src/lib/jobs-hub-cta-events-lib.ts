@@ -180,3 +180,50 @@ export function jobsDetailShareCopyAnalyticsData(jobSlug: string, tier: string) 
     tier,
   };
 }
+
+export type JobsIndexStatId = "total" | "remote" | "fresh" | "featured";
+
+export type JobsIndexStatFilterPatch = {
+  q?: string;
+  tier?: string;
+  remote?: string;
+  type?: string;
+  freshOnly?: boolean;
+  featuredOnly?: boolean;
+};
+
+export function jobsIndexStatAnalyticsEvent(): string {
+  return "jobs_index_stat_click";
+}
+
+export function jobsIndexStatAnalyticsData(statId: string, count: number, jobCount: number) {
+  return {
+    surface: JOBS_INDEX_SURFACE,
+    statId,
+    count,
+    jobCount,
+  };
+}
+
+/** Map a headline jobs stat to a filter patch applied on click. */
+export function jobsIndexStatFilterPatch(statId: string): JobsIndexStatFilterPatch | null {
+  switch (statId) {
+    case "total":
+      return {
+        q: "",
+        tier: "all",
+        remote: "all",
+        type: "all",
+        freshOnly: false,
+        featuredOnly: false,
+      };
+    case "remote":
+      return { remote: "remote" };
+    case "fresh":
+      return { freshOnly: true };
+    case "featured":
+      return { featuredOnly: true };
+    default:
+      return null;
+  }
+}

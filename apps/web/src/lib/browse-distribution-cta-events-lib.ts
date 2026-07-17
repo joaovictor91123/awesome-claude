@@ -60,3 +60,38 @@ export function parseBrowseFreshnessEntryRef(
     slug: entryRef.slice(slash + 1),
   };
 }
+
+export function browseFreshnessBucketAnalyticsEvent(): string {
+  return "browse_freshness_bucket_click";
+}
+
+export function browseFreshnessBucketAnalyticsData(
+  bucketId: string,
+  count: number,
+  percent: number,
+  scannedCount: number,
+) {
+  return {
+    surface: BROWSE_FRESHNESS_DISTRIBUTION_SURFACE,
+    bucketId,
+    count,
+    percent,
+    scannedCount,
+  };
+}
+
+/** Map a freshness bucket id to a browse signal hint for analytics context. */
+export function browseFreshnessBucketSignal(bucketId: string): string | null {
+  switch (bucketId) {
+    case "fresh":
+      return "fresh";
+    case "recent":
+      return "recent";
+    case "aging":
+      return "aging";
+    case "stale":
+      return "stale";
+    default:
+      return null;
+  }
+}
