@@ -23,7 +23,11 @@ import {
   jobsIndexPostAnalyticsEvent,
   jobsIndexSortSelectAnalyticsData,
   jobsIndexSortSelectAnalyticsEvent,
+  jobsIndexStatAnalyticsData,
+  jobsIndexStatAnalyticsEvent,
+  jobsIndexStatFilterPatch,
   type JobsIndexFilterAxis,
+  type JobsIndexStatId,
 } from "@/lib/jobs-hub-cta-events";
 import { NewsletterInline } from "@/components/newsletter-inline";
 import type { ErrorComponentProps } from "@tanstack/react-router";
@@ -311,6 +315,31 @@ function JobsPage() {
     setFeaturedOnly(false);
   }, [filterState, jobs.length]);
 
+  const onStatClick = useCallback(
+    (statId: JobsIndexStatId, count: number) => {
+      const patch = jobsIndexStatFilterPatch(statId);
+      if (!patch) return;
+      trackEvent(
+        jobsIndexStatAnalyticsEvent(),
+        jobsIndexStatAnalyticsData(statId, count, jobs.length),
+      );
+      if (patch.q !== undefined) setQ(patch.q);
+      if (patch.tier !== undefined) setTier(patch.tier as JobTier | "all");
+      if (patch.remote !== undefined) setRemote(patch.remote as RemoteFilter);
+      if (patch.type !== undefined) setType(patch.type);
+      if (patch.freshOnly !== undefined) setFreshOnly(patch.freshOnly);
+      if (patch.featuredOnly !== undefined) setFeaturedOnly(patch.featuredOnly);
+    },
+    [jobs.length],
+  );
+
+  const headlineStats: Array<{ id: JobsIndexStatId; label: string; count: number }> = [
+    { id: "total", label: "Open roles", count: counts.total },
+    { id: "remote", label: "Remote", count: counts.remote },
+    { id: "fresh", label: "This week", count: counts.fresh },
+    { id: "featured", label: "Featured", count: counts.featured },
+  ];
+
   return (
     <PageContainer>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -319,10 +348,7 @@ function JobsPage() {
           <h1 className="mt-2 h-display-1 text-ink text-balance">Roles building with Claude.</h1>
           <p className="mt-2 max-w-2xl text-ink-muted">
             Source-verified jobs from teams shipping agent workflows, MCP servers, and Claude Code
-            platforms.
-            <span className="ml-1 text-ink-subtle">
-              {counts.total} open · {counts.remote} remote · {counts.fresh} this week.
-            </span>
+            platforms. Click a headline stat to focus the board.
           </p>
         </div>
         <Link
@@ -337,6 +363,22 @@ function JobsPage() {
         >
           Post a role <ArrowUpRight className="h-4 w-4" />
         </Link>
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {headlineStats.map((stat) => (
+          <button
+            key={stat.id}
+            type="button"
+            onClick={() => onStatClick(stat.id, stat.count)}
+            className="rounded-xl border border-border bg-surface p-4 text-left transition-colors duration-200 ease-out hover:border-border-strong hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+          >
+            <div className="text-xs uppercase tracking-wider text-ink-subtle">{stat.label}</div>
+            <div className="mt-2 font-display text-2xl font-semibold tabular-nums text-ink">
+              {stat.count}
+            </div>
+          </button>
+        ))}
       </div>
 
       {/* Sticky filter bar */}
