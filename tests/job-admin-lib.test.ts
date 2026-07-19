@@ -797,6 +797,41 @@ describe("updateAdminJobState", () => {
     expect(db.runCalls.at(-1)?.values).toContain(expectedStatus);
   });
 
+  it.each(["close", "archive", "expire", "review"] as const)(
+    "persists checkedAt for action %s",
+    async (action) => {
+      // scripts/check-d1-job-sources.mjs sends checkedAt when it closes a job
+      // for a dead source; that timestamp justifies the closure and was
+      // previously dropped for these four actions.
+      const db = new FakeD1();
+      db.jobRows = [validActiveJobRow({ slug: `${action}-checked` })];
+      await updateAdminJobState(db, {
+        slug: `${action}-checked`,
+        action,
+        checkedAt: VALID_CHECKED_AT,
+      });
+      const call = db.runCalls.at(-1);
+      expect(call?.query).toContain("source_checked_at = ?");
+      expect(call?.query).toContain("last_checked_at = ?");
+      expect(call?.values).toContain(VALID_CHECKED_AT);
+    },
+  );
+
+  it("keeps the stale_check_count reset scoped to activate/reactivate", async () => {
+    // Only activate/reactivate mean the source is healthy again, so closing or
+    // archiving must not wipe the accumulated stale history.
+    const db = new FakeD1();
+    db.jobRows = [validActiveJobRow({ slug: "close-history" })];
+    await updateAdminJobState(db, {
+      slug: "close-history",
+      action: "close",
+      checkedAt: VALID_CHECKED_AT,
+    });
+    expect(db.runCalls.at(-1)?.query).toContain(
+      "stale_check_count = CASE WHEN ? IN ('activate', 'reactivate') THEN 0 ELSE stale_check_count END",
+    );
+  });
+
   it("marks a job stale and increments stale_check_count", async () => {
     const db = new FakeD1();
     db.jobRows = [

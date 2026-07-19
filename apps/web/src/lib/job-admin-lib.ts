@@ -479,12 +479,18 @@ export async function updateAdminJobState(
 
   const result = await db
     .prepare(
+      // `checkedAt` records when the source was last verified, so it is
+      // persisted for every action — a job closed for a dead source must keep
+      // the timestamp that justified the closure. `stale_check_count` still
+      // resets only for activate/reactivate, which are the actions that mean
+      // the source is healthy again; close/archive/expire/review keep the
+      // accumulated stale history.
       `UPDATE jobs_listings
       SET
         status = ?,
         expires_at = CASE WHEN ? = 1 THEN ? ELSE expires_at END,
-        source_checked_at = CASE WHEN ? IN ('activate', 'reactivate') THEN ? ELSE source_checked_at END,
-        last_checked_at = CASE WHEN ? IN ('activate', 'reactivate') THEN ? ELSE last_checked_at END,
+        source_checked_at = ?,
+        last_checked_at = ?,
         stale_check_count = CASE WHEN ? IN ('activate', 'reactivate') THEN 0 ELSE stale_check_count END,
         updated_at = CURRENT_TIMESTAMP
       WHERE slug = ?`,
@@ -493,9 +499,7 @@ export async function updateAdminJobState(
       nextStatus,
       hasExpiresAt ? 1 : 0,
       expiresAt,
-      input.action,
       checkedAt,
-      input.action,
       checkedAt,
       input.action,
       input.slug,
