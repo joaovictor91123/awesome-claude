@@ -417,7 +417,14 @@ export function buildBrandAssetMetadata(data = {}, options = {}) {
           siteUrl: options.assetBaseUrl || options.siteUrl,
         })
       : "");
-  const brandLogoUrl = clean(data.brandLogoUrl);
+  const brandLogoUrl =
+    clean(data.brandLogoUrl) ||
+    (shouldUseBrandfetch
+      ? brandAssetProxyUrl(brandDomain, {
+          kind: "logo",
+          siteUrl: options.assetBaseUrl || options.siteUrl,
+        })
+      : "");
   const safeBrandIconUrl =
     brandIconUrl && isAllowedBrandAssetUrl(brandIconUrl) ? brandIconUrl : "";
   const safeBrandLogoUrl =

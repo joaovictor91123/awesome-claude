@@ -342,6 +342,33 @@ describe("buildBrandAssetMetadata", () => {
     });
   });
 
+  it("auto-resolves brandfetch logos alongside icons for known brands", () => {
+    // Before the fix brandLogoUrl was left empty even when the icon resolved.
+    const metadata = buildBrandAssetMetadata(
+      { title: "Zapier Workflow", tags: ["zapier"] },
+      { allowAliasFallback: true, assetBaseUrl: "https://heyclau.de" },
+    );
+    expect(metadata).toMatchObject({
+      brandIconUrl: "https://heyclau.de/api/brand-assets/icon/zapier.com",
+      brandLogoUrl: "https://heyclau.de/api/brand-assets/logo/zapier.com",
+      brandAssetSource: "brandfetch",
+    });
+  });
+
+  it("keeps a manually supplied brandLogoUrl over the brandfetch fallback", () => {
+    const metadata = buildBrandAssetMetadata(
+      {
+        title: "Zapier Workflow",
+        tags: ["zapier"],
+        brandLogoUrl: "https://heyclau.de/custom-logo.png",
+      },
+      { allowAliasFallback: true },
+    );
+    // Manual value wins; the icon still auto-resolves independently.
+    expect(metadata.brandLogoUrl).toBe("https://heyclau.de/custom-logo.png");
+    expect(metadata.brandIconUrl).toBe("/api/brand-assets/icon/zapier.com");
+  });
+
   it("does not auto-resolve hosting domains without a known brand match", () => {
     expect(
       buildBrandAssetMetadata({
