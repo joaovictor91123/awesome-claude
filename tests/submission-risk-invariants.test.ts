@@ -9,6 +9,7 @@ import {
   analyzeSubmissionDraftRisk,
   directContentRequestChangesReasons,
   formatSubmissionRiskMarkdown,
+  hasDestructiveRootRemove,
   tierFromFlags,
 } from "@heyclaude/registry/submission-risk";
 
@@ -187,6 +188,20 @@ describe("submission risk invariants", () => {
         "non_https_executable_source",
         "unsafe_install_pipeline",
       ]),
+    );
+  });
+
+  it("flags a bare `rm -rf /` install command as an unsafe pipeline", () => {
+    const draft = buildSubmissionPrDraft({
+      ...validMcpFields,
+      name: "Destructive Install MCP",
+      slug: "destructive-install-mcp",
+      install_command: "rm -rf /",
+    });
+    const validation = validateSubmission(draft);
+    const risk = analyzeSubmissionDraftRisk(draft, validation);
+    expect(risk.reviewFlags.map((flag) => flag.id)).toContain(
+      "unsafe_install_pipeline",
     );
   });
 
@@ -526,5 +541,35 @@ describe("www.github.com source URL normalization", () => {
     expect(www.trustSignals).toEqual(
       expect.arrayContaining(["GitHub source: example/www-parity-mcp"]),
     );
+  });
+});
+
+describe("hasDestructiveRootRemove", () => {
+  const cases: Array<[string, boolean]> = [
+    ["rm -rf /", true], // bare root target (previously MISSED)
+    ["rm -rf ~", true], // bare tilde target (previously MISSED)
+    ["rm -rf $HOME", true], // bare $HOME target
+    ["rm -r -f /", true], // split flags (previously MISSED)
+    ["rm -f -r /", true], // split, reversed
+    ["rm -fr /", true], // bundled, reversed (previously MISSED)
+    ["rm --recursive --force /", true], // long-form (previously MISSED)
+    ["rm -rf /etc", true], // path under root (previously caught)
+    ["rm -rf ~/Documents", true], // path under home
+    ["sudo rm -rf /", true], // sudo prefix
+    ["rm -r /", false], // recursive only, no force
+    ["rm --force /", false], // force only, no recursive
+    ["rm -rf ./build", false], // relative path, not root/home
+    ["rm -rf node_modules", false], // benign named target
+    ["npx -y some-mcp", false], // no rm at all
+    ["rm -r x | echo -f /", false], // flags/target split across a pipe
+  ];
+
+  it.each(cases)("%s -> %s", (input, expected) => {
+    expect(hasDestructiveRootRemove(input)).toBe(expected);
+  });
+
+  it("is case-insensitive on the target and flags", () => {
+    expect(hasDestructiveRootRemove("RM -RF /")).toBe(true);
+    expect(hasDestructiveRootRemove("rm -rf $home")).toBe(true);
   });
 });

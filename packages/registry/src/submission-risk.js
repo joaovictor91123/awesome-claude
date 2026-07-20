@@ -898,6 +898,39 @@ function addSchemaSignals(report, validationReport) {
   );
 }
 
+// Detect a destructive recursive-force `rm` aimed at a root/home target
+// (`/`, `~`, `$HOME`), including a BARE target with nothing appended. Flags are
+// parsed token-by-token so split (`rm -r -f /`), reversed (`rm -fr /`), and
+// long-form (`rm --recursive --force /`) spellings all count — not just the
+// literal `-rf` token. `installText` is already lowercased by the caller; the
+// extra toLowerCase keeps the helper correct if reused elsewhere.
+export function hasDestructiveRootRemove(text) {
+  const lower = String(text ?? "").toLowerCase();
+  // Bound each `rm` to its own command segment so unrelated later tokens (after
+  // a pipe or `;`) can't supply the target or flags.
+  const commandRe = /\brm\b([^\n|;&]*)/g;
+  let match;
+  while ((match = commandRe.exec(lower)) !== null) {
+    let recursive = false;
+    let force = false;
+    for (const token of match[1].split(/\s+/).filter(Boolean)) {
+      if (token === "--recursive") {
+        recursive = true;
+      } else if (token === "--force") {
+        force = true;
+      } else if (/^-[a-z]+$/.test(token)) {
+        if (token.includes("r")) recursive = true;
+        if (token.includes("f")) force = true;
+      } else if (recursive && force && /^(\/|~|\$home)/.test(token)) {
+        // A root/home target reached with both flags already set is the
+        // destructive form (`rm -rf /`, `rm -rf /etc`, `rm -rf ~`, `rm -rf $HOME`).
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function addContentRiskSignals(report, fields, text) {
   const installText = lower(
     [
@@ -973,7 +1006,7 @@ function addContentRiskSignals(report, fields, text) {
   }
 
   if (
-    /rm\s+-rf\s+(\/|~|\$home)\b/i.test(installText) ||
+    hasDestructiveRootRemove(installText) ||
     /\b(curl|wget)\b[\s\S]{0,120}\|[\s\S]{0,40}\b(sudo\s+)?(sh|bash)\b/i.test(
       installText,
     ) ||
