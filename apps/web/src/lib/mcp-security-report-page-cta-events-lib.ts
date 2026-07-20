@@ -127,7 +127,7 @@ export function mcpSecurityReportStatDestination(
 }
 
 export type McpSecurityReportRouteDestination =
-  | { to: "/guides/$slug"; params: { slug: string } }
+  | { to: "/entry/$category/$slug"; params: { category: string; slug: string } }
   | { to: "/state-of-mcp-servers" }
   | { to: "/$category"; params: { category: string } };
 
@@ -137,9 +137,15 @@ export function mcpSecurityReportRouteDestination(
 ): McpSecurityReportRouteDestination | null {
   switch (destination) {
     case "threat-model-guide":
+      // "guides" is a content category, not a URL segment: guide entries are
+      // served by /entry/$category/$slug like every other category, not a
+      // nonexistent /guides/$slug route.
       return {
-        to: "/guides/$slug",
-        params: { slug: "threat-model-mcp-servers-before-installation" },
+        to: "/entry/$category/$slug",
+        params: {
+          category: "guides",
+          slug: "threat-model-mcp-servers-before-installation",
+        },
       };
     case "state-of-mcp-servers":
       return { to: "/state-of-mcp-servers" };
