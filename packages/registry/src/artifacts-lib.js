@@ -917,6 +917,12 @@ export function buildRaycastEntries(entries) {
       documentationUrl: entry.documentationUrl || "",
       downloadTrust: entry.downloadTrust,
       verificationStatus: entry.verificationStatus || "",
+      // Mirror buildSearchEntries so the locally-browsed Raycast feed carries the
+      // same trust signals (incl. hasSafetyNotes/hasPrivacyNotes) the extension's
+      // advanced filters and accessory badges read; without this the "Has Safety
+      // Notes"/"Has Privacy Notes" filters match nothing when the search box is
+      // empty (feed path) instead of the server-search path.
+      trustSignals: buildListTrustSignals(entry),
       ...buildCompactInstallFields(entry),
       platformCompatibility:
         entry.category === "skills"

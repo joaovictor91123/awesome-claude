@@ -803,6 +803,22 @@ describe("buildRaycastEntries", () => {
       buildEntryTrustSignals(FIXTURE_MCP).platforms,
     );
   });
+
+  it("includes trust signals so the local feed can filter by safety/privacy notes", () => {
+    const withNotes = buildRaycastEntries([
+      syntheticEntry("mcp", "with-notes"),
+    ])[0];
+    expect(withNotes?.trustSignals).toMatchObject({
+      hasSafetyNotes: true,
+      hasPrivacyNotes: true,
+    });
+
+    const withoutNotes = buildRaycastEntries([
+      syntheticEntry("mcp", "plain", { safetyNotes: [], privacyNotes: [] }),
+    ])[0];
+    expect(withoutNotes?.trustSignals?.hasSafetyNotes).toBe(false);
+    expect(withoutNotes?.trustSignals?.hasPrivacyNotes).toBe(false);
+  });
 });
 
 describe("buildRaycastEnvelope", () => {
