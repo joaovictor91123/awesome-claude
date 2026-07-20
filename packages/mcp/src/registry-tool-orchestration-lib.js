@@ -342,6 +342,7 @@ export async function listCategoryEntries(args = {}, options = {}) {
   const query = normalizeText(args.query);
   const offset = normalizeOffset(args.offset);
   const limit = normalizeLimit(args.limit, 20);
+  const trustFilters = parsedTrustArgs(args);
   const searchIndex = unwrapEntries(
     await readJsonArtifact("search-index.json", options),
   );
@@ -350,7 +351,8 @@ export async function listCategoryEntries(args = {}, options = {}) {
     .filter((entry) => !category || entry.category === category)
     .filter((entry) => entryMatchesPlatform(entry, platform))
     .filter((entry) => entryMatchesTag(entry, tag))
-    .filter((entry) => entryMatchesQuery(entry, query));
+    .filter((entry) => entryMatchesQuery(entry, query))
+    .filter((entry) => entryMatchesTrustFilters(entry, trustFilters));
   const page = paginateEntries(entries, offset, limit).map(toEntrySummary);
 
   return buildCategoryEntriesPageResponse({
