@@ -299,6 +299,34 @@ describe("buildContentEntryFromMdx", () => {
     expect(entry.repoUrl).toBeNull();
   });
 
+  it("canonicalizes a GitHub repoUrl and preserves a non-GitHub repoUrl", () => {
+    const repoEntry = (slug: string, repoUrl: string) =>
+      buildEntry({
+        source: mdx(
+          [
+            `title: ${slug}`,
+            `slug: ${slug}`,
+            "description: Entry exercising repoUrl handling in the builder.",
+            "dateAdded: 2026-01-03",
+            `repoUrl: ${repoUrl}`,
+          ].join("\n"),
+        ),
+      });
+
+    // GitHub URLs still get the canonical owner/repo-derived URL.
+    expect(repoEntry("gh", "https://github.com/Acme/Widget").repoUrl).toBe(
+      "https://github.com/Acme/Widget",
+    );
+    // A valid non-GitHub repo URL now survives instead of being wiped to null.
+    expect(repoEntry("gl", "https://gitlab.com/acme/widget").repoUrl).toBe(
+      "https://gitlab.com/acme/widget",
+    );
+    // A credential-embedded URL is not a clean public URL -> stays null.
+    expect(
+      repoEntry("bad", "https://user:pass@gitlab.com/acme/widget").repoUrl,
+    ).toBeNull();
+  });
+
   it("builds a first-party skill package with sha256 and defaults", () => {
     const entry = buildEntry({
       source: mdx(
