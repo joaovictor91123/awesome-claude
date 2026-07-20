@@ -166,12 +166,42 @@ export function buildRelatedEntriesGraphResponse({ target, entries, limit }) {
   };
 }
 
+/**
+ * Relation type for a scored (non-graph) related entry.
+ *
+ * A narrow port of the applicable `relationTypeFor` branches, classified from
+ * the `relatedReasons` the scorer already emits: `same_category` plus a shared
+ * tag/keyword is the "alternative" case, a shared source host is the
+ * "same-ecosystem" case. The collection-member/same-project/category-pair
+ * branches depend on evidence the scored path does not compute, so those fall
+ * through to the generic "related" rather than being guessed at.
+ */
+function scoredRelationType(reasons) {
+  const list = Array.isArray(reasons) ? reasons : [];
+  const sameCategory = list.includes("same_category");
+  const sharedTokens = list.some(
+    (reason) => reason.startsWith("tag:") || reason.startsWith("keyword:"),
+  );
+  const sharedDomains = list.some((reason) => reason.startsWith("source:"));
+
+  if (sameCategory && (sharedTokens || sharedDomains)) return "alternative";
+  if (sharedDomains) return "same-ecosystem";
+  return "related";
+}
+
 export function buildRelatedEntriesScoredResponse({ target, entries, limit }) {
   return {
     ok: true,
     key: `${target.category}:${target.slug}`,
+    // Mirrors the graph path's `relationGraph: true` so the key is always
+    // present and always a boolean, and every entry carries a `relation`,
+    // whether or not a relation-graph row existed for the target.
+    relationGraph: false,
     count: entries.length,
-    entries: entries.slice(0, limit),
+    entries: entries.slice(0, limit).map((entry) => ({
+      ...entry,
+      relation: entry.relation || scoredRelationType(entry.relatedReasons),
+    })),
   };
 }
 

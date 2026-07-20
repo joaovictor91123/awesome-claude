@@ -9378,10 +9378,11 @@ describe("registry-handlers-lib related, adapter, and compatibility responses", 
     expect(response).toEqual({
       ok: true,
       key: "mcp:browser-bridge",
+      relationGraph: false,
       count: 3,
       entries: [
-        { category: "mcp", slug: "a" },
-        { category: "mcp", slug: "b" },
+        { category: "mcp", slug: "a", relation: "related" },
+        { category: "mcp", slug: "b", relation: "related" },
       ],
     });
   });
@@ -9496,5 +9497,125 @@ describe("registry-handlers-lib related, adapter, and compatibility responses", 
       { platform: "claude-code", feedSlug: "feed-claude-code" },
       { platform: "cursor", feedSlug: "feed-cursor" },
     ]);
+  });
+});
+
+describe("entry.related response shape consistency", () => {
+  const target = { category: "mcp", slug: "duckdb" };
+
+  it("marks the scored fallback with relationGraph: false", () => {
+    const response = buildRelatedEntriesScoredResponse({
+      target,
+      limit: 3,
+      entries: [
+        { category: "mcp", slug: "a", relatedScore: 9, relatedReasons: [] },
+      ],
+    });
+
+    expect(response.relationGraph).toBe(false);
+  });
+
+  it("exposes the same keys on both paths", () => {
+    const scored = buildRelatedEntriesScoredResponse({
+      target,
+      limit: 3,
+      entries: [
+        { category: "mcp", slug: "a", relatedScore: 9, relatedReasons: [] },
+      ],
+    });
+    const graph = buildRelatedEntriesGraphResponse({
+      target,
+      limit: 3,
+      entries: [
+        {
+          category: "mcp",
+          slug: "a",
+          relation: "same-project",
+          relatedScore: 9,
+          relatedReasons: [],
+        },
+      ],
+    });
+
+    expect(Object.keys(scored).sort()).toEqual(Object.keys(graph).sort());
+    expect(typeof scored.relationGraph).toBe("boolean");
+    expect(typeof graph.relationGraph).toBe("boolean");
+  });
+
+  it("classifies a relation for every scored entry", () => {
+    const response = buildRelatedEntriesScoredResponse({
+      target,
+      limit: 5,
+      entries: [
+        {
+          category: "mcp",
+          slug: "same-cat-shared-tag",
+          relatedScore: 9,
+          relatedReasons: ["same_category", "tag:sql"],
+        },
+        {
+          category: "mcp",
+          slug: "shared-host",
+          relatedScore: 7,
+          relatedReasons: ["source:github.com"],
+        },
+        {
+          category: "guides",
+          slug: "weak",
+          relatedScore: 5,
+          relatedReasons: [],
+        },
+      ],
+    });
+
+    expect(response.entries.map((entry) => entry.relation)).toEqual([
+      "alternative",
+      "same-ecosystem",
+      "related",
+    ]);
+    for (const entry of response.entries) {
+      expect(typeof entry.relation).toBe("string");
+    }
+  });
+
+  it("does not overwrite a relation the caller already supplied", () => {
+    const response = buildRelatedEntriesScoredResponse({
+      target,
+      limit: 3,
+      entries: [
+        {
+          category: "mcp",
+          slug: "a",
+          relation: "collection-member",
+          relatedScore: 9,
+          relatedReasons: ["same_category", "tag:sql"],
+        },
+      ],
+    });
+
+    expect(response.entries[0].relation).toBe("collection-member");
+  });
+
+  it("leaves the graph path untouched", () => {
+    const response = buildRelatedEntriesGraphResponse({
+      target,
+      limit: 2,
+      entries: [
+        {
+          category: "mcp",
+          slug: "a",
+          relation: "same-project",
+          relatedScore: 9,
+          relatedReasons: ["tag:sql"],
+        },
+      ],
+    });
+
+    expect(response.relationGraph).toBe(true);
+    expect(response.entries[0]).toMatchObject({
+      relation: "same-project",
+      relatedScore: 9,
+      relatedReasons: ["tag:sql"],
+    });
   });
 });
