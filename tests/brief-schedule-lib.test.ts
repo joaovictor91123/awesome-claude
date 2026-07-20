@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { nextSendSlot } from "../apps/web/src/lib/brief-schedule-lib";
+import {
+  nextSendSlot,
+  sendSlotLabel,
+} from "../apps/web/src/lib/brief-schedule-lib";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -69,6 +72,30 @@ describe("nextSendSlot", () => {
   it("returns an ISO 8601 UTC string", () => {
     expect(nextSendSlot(new Date("2026-06-01T00:00:00Z"))).toMatch(
       /^\d{4}-\d{2}-\d{2}T16:00:00\.000Z$/,
+    );
+  });
+});
+
+describe("sendSlotLabel", () => {
+  it("labels the send slot as Sunday 16:00 UTC", () => {
+    expect(sendSlotLabel()).toBe("Sunday 16:00 UTC");
+  });
+
+  it("stays consistent with the day/hour nextSendSlot actually produces", () => {
+    // Derived from the same constants, so the human copy can't drift from the
+    // real schedule the way the old hardcoded "Tuesday 15:00 UTC" copy did.
+    const dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const hour = String(knownSunday.getUTCHours()).padStart(2, "0");
+    expect(sendSlotLabel()).toBe(
+      `${dayNames[knownSunday.getUTCDay()]} ${hour}:00 UTC`,
     );
   });
 });

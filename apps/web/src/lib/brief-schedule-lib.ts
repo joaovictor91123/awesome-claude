@@ -13,6 +13,26 @@
 const SEND_DOW = 0; // 0=Sun..6=Sat; Sunday
 const SEND_HOUR_UTC = 16;
 
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+/**
+ * Human-readable label for the weekly send slot (e.g. "Sunday 16:00 UTC"),
+ * derived from SEND_DOW/SEND_HOUR_UTC so approval/marketing copy can reference
+ * the single source of truth instead of hardcoding a second copy that can drift.
+ */
+export function sendSlotLabel(): string {
+  const hour = String(SEND_HOUR_UTC).padStart(2, "0");
+  return `${DAY_NAMES[SEND_DOW]} ${hour}:00 UTC`;
+}
+
 /**
  * The next Sunday 16:00 UTC strictly at or after `from` (today if it's Sunday
  * before 16:00, otherwise the following Sunday). Returned as an ISO string for
