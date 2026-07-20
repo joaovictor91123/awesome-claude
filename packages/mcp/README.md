@@ -34,8 +34,10 @@ strict request validation, a 64 KiB body limit, and a dedicated Cloudflare
   the best-match entries for a plain-language task, each with why it fits, a
   trust summary, safety/privacy notes, and an inline install block, plus a
   `topPick` and consolidated `installPlan`.
-- `server.info` - fetch package version, registry generation, tool list,
+- `registry.info` - fetch package version, registry generation, tool list,
   public access policy, and rate-limit metadata.
+- `registry.plan` - assemble a workflow toolbox for a stated goal, returning
+  the entries that fit it with a consolidated install plan.
 - `registry.list` - browse entries with bounded pagination and optional
   category, platform, tag, and query filters.
 - `registry.updates` - list recently added or upstream-updated entries from
@@ -62,7 +64,7 @@ strict request validation, a 64 KiB body limit, and a dedicated Cloudflare
   guidance.
 - `install.adapter` - fetch generated adapter content, currently Cursor
   rule adapters for skill packages.
-- `feeds.list` - discover public JSON, RSS, Atom, and platform
+- `registry.feeds` - discover public JSON, RSS, Atom, and platform
   feeds.
 - `submission.schema` - fetch category submission fields for PR-first
   intake.
@@ -98,7 +100,9 @@ strict request validation, a 64 KiB body limit, and a dedicated Cloudflare
 
 The server also exposes read-only MCP resources:
 
-- `heyclaude://feeds/directory`
+- `heyclaude://registry/recent`
+- `heyclaude://registry/trending`
+- `heyclaude://jobs/active`
 - `heyclaude://category/{category}`
 - `heyclaude://entry/{category}/{slug}`
 
