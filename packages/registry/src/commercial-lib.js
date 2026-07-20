@@ -193,6 +193,18 @@ export function hasHttpsUrl(value) {
   return /^https:\/\//i.test(textValue(value));
 }
 
+// A REQUIRED public https URL for job apply/source fields: it must be present
+// AND survive the same strict validation lead URLs already get. Unlike
+// isPublicHttpsUrl (which returns true for an empty string, i.e. "optionally
+// absent"), an empty value here is a failure because these job fields are
+// required. This closes the gap where hasHttpsUrl's `/^https:\/\//` prefix test
+// accepted malformed or credential-embedded URLs (e.g.
+// `https://user:pass@evil.com/apply`) onto the public jobs board.
+function isRequiredPublicHttpsUrl(value) {
+  const text = textValue(value);
+  return text !== "" && isPublicHttpsUrl(text);
+}
+
 export function validateJobPublicationQuality(job = {}) {
   const tier = normalizeCommercialTier(job.tier);
   const status = textValue(job.status).toLowerCase();
@@ -264,7 +276,7 @@ export function validateJobPublicationQuality(job = {}) {
   if (!employmentType) {
     errors.push("paid active jobs require an employment type");
   }
-  if (!hasHttpsUrl(sourceUrl)) {
+  if (!isRequiredPublicHttpsUrl(sourceUrl)) {
     errors.push("paid active jobs require an HTTPS source or apply URL");
   }
   if (!postedAt) {
@@ -315,10 +327,10 @@ export function validateJobPublicExposure(job = {}, options = {}) {
       `active jobs require a ${JOB_PUBLIC_EXPOSURE_RULES.summaryMinLength}+ character reviewed summary`,
     );
   }
-  if (!hasHttpsUrl(applyUrl)) {
+  if (!isRequiredPublicHttpsUrl(applyUrl)) {
     errors.push("active jobs require an HTTPS employer apply URL");
   }
-  if (!hasHttpsUrl(sourceUrl)) {
+  if (!isRequiredPublicHttpsUrl(sourceUrl)) {
     errors.push("active jobs require an HTTPS source URL");
   }
   if (!checkedAt && !hasLiveSourceTruth) {
