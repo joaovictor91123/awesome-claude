@@ -38,6 +38,7 @@ export const GET = createApiHandler(
     const kind = normalizeKind(query.kind);
     const status = normalizeCommercialStatus(query.status);
     const limit = Math.max(1, Math.min(MAX_LIMIT, Math.trunc(query.limit)));
+    const offset = Math.max(0, Math.min(10_000, Math.trunc(query.offset)));
     const format = query.format;
 
     const where = [];
@@ -71,9 +72,9 @@ export const GET = createApiHandler(
       FROM listing_leads
       ${whereSql}
       ORDER BY created_at DESC
-      LIMIT ?`,
+      LIMIT ? OFFSET ?`,
       )
-      .bind(...values, limit)
+      .bind(...values, limit, offset)
       .all();
 
     if (format === "csv") {
