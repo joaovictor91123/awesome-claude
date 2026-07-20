@@ -91,8 +91,11 @@ describe("mcp security report page cta events lib", () => {
     });
     expect(mcpSecurityReportStatDestination("unknown")).toBeNull();
     expect(mcpSecurityReportRouteDestination("threat-model-guide")).toEqual({
-      to: "/guides/$slug",
-      params: { slug: "threat-model-mcp-servers-before-installation" },
+      to: "/entry/$category/$slug",
+      params: {
+        category: "guides",
+        slug: "threat-model-mcp-servers-before-installation",
+      },
     });
     expect(mcpSecurityReportRouteDestination("state-of-mcp-servers")).toEqual({
       to: "/state-of-mcp-servers",
