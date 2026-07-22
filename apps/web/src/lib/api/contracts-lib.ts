@@ -616,9 +616,22 @@ const submissionPreflightNonPrResponseSchema = submissionPreflightBaseResponseSc
   })
   .strict();
 
+// The honeypot short-circuit intentionally discards a bot submission and returns
+// this minimal shape (no category/slug/risk/blockers), deliberately giving no
+// signal that it was detected as a bot. It carries none of the base fields the
+// other two variants require, so it is documented as its own strict variant.
+const submissionPreflightHoneypotResponseSchema = z
+  .object({
+    ok: z.literal(true),
+    valid: z.literal(false),
+    queued: z.literal(false),
+  })
+  .strict();
+
 export const submissionPreflightResponseSchema = z.union([
   submissionPreflightPrReadyResponseSchema,
   submissionPreflightNonPrResponseSchema,
+  submissionPreflightHoneypotResponseSchema,
 ]);
 
 export const downloadQuerySchema = z.object({

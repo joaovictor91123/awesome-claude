@@ -9,6 +9,7 @@ import {
   publicJobsQuerySchema,
   registrySearchQuerySchema,
   route,
+  submissionPreflightResponseSchema,
   votesToggleBodySchema,
 } from "../apps/web/src/lib/api/contracts-lib";
 
@@ -793,6 +794,35 @@ describe("contracts-lib route definitions", () => {
 });
 
 describe("contracts-lib zod schemas", () => {
+  it("submissionPreflightResponseSchema accepts the honeypot short-circuit shape", () => {
+    // The route's honeypot path returns exactly this; it must be a documented,
+    // valid response variant (previously it matched none of the union members).
+    const parsed = submissionPreflightResponseSchema.parse({
+      ok: true,
+      valid: false,
+      queued: false,
+    });
+    expect(parsed).toEqual({ ok: true, valid: false, queued: false });
+
+    // The variant is strict: no leaking extra fields, and the queued flag is
+    // pinned to false so it can't be confused with a real "queued" response.
+    expect(
+      submissionPreflightResponseSchema.safeParse({
+        ok: true,
+        valid: false,
+        queued: false,
+        extra: "leak",
+      }).success,
+    ).toBe(false);
+    expect(
+      submissionPreflightResponseSchema.safeParse({
+        ok: true,
+        valid: false,
+        queued: true,
+      }).success,
+    ).toBe(false);
+  });
+
   it("publicJobsQuerySchema matrix 0", () => {
     const parsed = publicJobsQuerySchema.parse({ limit: 1, offset: 0 });
     expect(parsed.limit).toBeGreaterThan(0);
