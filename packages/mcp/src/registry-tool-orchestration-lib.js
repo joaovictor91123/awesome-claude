@@ -678,14 +678,27 @@ export async function listJobsActive(options = {}) {
 }
 
 export async function listRegistryResources(args = {}, options = {}) {
-  const manifest = await readJsonArtifact("registry-manifest.json", options);
-  const categories = Object.keys(manifest.categories || {}).sort();
-  return buildListRegistryResourcesResponse({
-    manifest,
-    categories,
-    discoveryResources: DISCOVERY_RESOURCES,
-    jsonMimeType: JSON_MIME_TYPE,
-  });
+  try {
+    const manifest = await readJsonArtifact("registry-manifest.json", options);
+    const categories = Object.keys(manifest.categories || {}).sort();
+    return buildListRegistryResourcesResponse({
+      manifest,
+      categories,
+      discoveryResources: DISCOVERY_RESOURCES,
+      jsonMimeType: JSON_MIME_TYPE,
+    });
+  } catch (error) {
+    // A missing/corrupt manifest (missing file, wrong --data-dir, corrupt JSON)
+    // otherwise escapes through the SDK request handler as a raw transport
+    // error. Return the same "unavailable" envelope the tools/call boundary
+    // (callRegistryTool) already uses for this exact failure mode.
+    return withPublicPolicy(
+      unavailable(
+        "HeyClaude registry data is unavailable.",
+        error instanceof Error ? error.message : String(error),
+      ),
+    );
+  }
 }
 
 export async function readRegistryResource(args = {}, options = {}) {
@@ -712,68 +725,86 @@ export async function readRegistryResource(args = {}, options = {}) {
   }
 
   const parts = parsed.pathname.split("/").filter(Boolean);
-  let payload;
-  if (parsed.hostname === "feeds" && parts[0] === "directory") {
-    payload = await readJsonArtifact("directory-index.json", options);
-  } else if (parsed.hostname === "category" && parts.length === 1) {
-    const category = normalizeText(parts[0]);
-    if (!isSafePathPart(category)) {
+  try {
+    let payload;
+    if (parsed.hostname === "feeds" && parts[0] === "directory") {
+      payload = await readJsonArtifact("directory-index.json", options);
+    } else if (parsed.hostname === "category" && parts.length === 1) {
+      const category = normalizeText(parts[0]);
+      if (!isSafePathPart(category)) {
+        return resourcePayload(
+          invalid("Category resource path is not slug-safe."),
+        );
+      }
+      const entries = unwrapEntries(
+        await readJsonArtifact("search-index.json", options),
+      );
+      // Bound the category resource like every other listing surface. Absent
+      // params fall back to DISCOVERY_RESOURCE_LIMIT (normalizeLimit needs
+      // undefined, not the null that URLSearchParams.get returns, to hit its
+      // fallback); normalizeLimit also hard-caps the page at that limit.
+      const offset = normalizeOffset(
+        parsed.searchParams.get("offset") ?? undefined,
+      );
+      const limit = normalizeLimit(
+        parsed.searchParams.get("limit") ?? undefined,
+        DISCOVERY_RESOURCE_LIMIT,
+      );
+      payload = buildCategoryResourcePayload(
+        category,
+        entries,
+        toEntrySummary,
+        {
+          offset,
+          limit,
+        },
+      );
+    } else if (parsed.hostname === "entry" && parts.length === 2) {
+      const [category, slug] = parts.map(normalizeText);
+      // Resource reads return the full document; only the tool defaults to a
+      // token-efficient excerpt.
+      const detail = await getEntryDetail(
+        { category, slug, bodyMode: "full" },
+        options,
+      );
+      payload = detail;
+    } else if (
+      parsed.hostname === "registry" &&
+      parts.length === 1 &&
+      parts[0] === "recent"
+    ) {
+      payload = await listRegistryRecent(options);
+    } else if (
+      parsed.hostname === "registry" &&
+      parts.length === 1 &&
+      parts[0] === "trending"
+    ) {
+      payload = await listRegistryTrending(options);
+    } else if (
+      parsed.hostname === "jobs" &&
+      parts.length === 1 &&
+      parts[0] === "active"
+    ) {
+      payload = await listJobsActive(options);
+    } else {
       return resourcePayload(
-        invalid("Category resource path is not slug-safe."),
+        notFound(`Unsupported HeyClaude resource URI: ${uri}`),
       );
     }
-    const entries = unwrapEntries(
-      await readJsonArtifact("search-index.json", options),
-    );
-    // Bound the category resource like every other listing surface. Absent
-    // params fall back to DISCOVERY_RESOURCE_LIMIT (normalizeLimit needs
-    // undefined, not the null that URLSearchParams.get returns, to hit its
-    // fallback); normalizeLimit also hard-caps the page at that limit.
-    const offset = normalizeOffset(
-      parsed.searchParams.get("offset") ?? undefined,
-    );
-    const limit = normalizeLimit(
-      parsed.searchParams.get("limit") ?? undefined,
-      DISCOVERY_RESOURCE_LIMIT,
-    );
-    payload = buildCategoryResourcePayload(category, entries, toEntrySummary, {
-      offset,
-      limit,
-    });
-  } else if (parsed.hostname === "entry" && parts.length === 2) {
-    const [category, slug] = parts.map(normalizeText);
-    // Resource reads return the full document; only the tool defaults to a
-    // token-efficient excerpt.
-    const detail = await getEntryDetail(
-      { category, slug, bodyMode: "full" },
-      options,
-    );
-    payload = detail;
-  } else if (
-    parsed.hostname === "registry" &&
-    parts.length === 1 &&
-    parts[0] === "recent"
-  ) {
-    payload = await listRegistryRecent(options);
-  } else if (
-    parsed.hostname === "registry" &&
-    parts.length === 1 &&
-    parts[0] === "trending"
-  ) {
-    payload = await listRegistryTrending(options);
-  } else if (
-    parsed.hostname === "jobs" &&
-    parts.length === 1 &&
-    parts[0] === "active"
-  ) {
-    payload = await listJobsActive(options);
-  } else {
+
+    return resourcePayload(payload);
+  } catch (error) {
+    // Same artifact-read failure boundary as callRegistryTool: a missing/corrupt
+    // artifact returns the "unavailable" envelope (wrapped as resource contents,
+    // consistent with this function's other error responses) instead of throwing
+    // a raw transport error.
     return resourcePayload(
-      notFound(`Unsupported HeyClaude resource URI: ${uri}`),
+      unavailable(
+        "HeyClaude registry data is unavailable.",
+        error instanceof Error ? error.message : String(error),
+      ),
     );
   }
-
-  return resourcePayload(payload);
 }
 export async function getCompatibility(args = {}, options = {}) {
   const category = normalizeText(args.category || "skills");
