@@ -11,8 +11,21 @@ import {
   isPublicHttpsUrl,
   publicUrlHostname,
 } from "./source-url-lib.js";
+import { SHELL_TOKENS } from "./command-safety-lib.js";
 
 export const SUBMISSION_RISK_SCHEMA_VERSION = 1;
+
+// A downloader piped straight into a shell. Kept in sync with
+// command-safety-lib's SHELL_TOKENS (bash/zsh/sh/dash/ash) so both detectors
+// recognize the same receiving shells — zsh in particular is macOS's default,
+// so `curl … | zsh` is a realistic install instruction. The tokens are plain
+// shell names (no regex metacharacters), so they are safe to interpolate.
+const CURL_PIPE_TO_SHELL_PATTERN = new RegExp(
+  `\\b(curl|wget)\\b[\\s\\S]{0,120}\\|[\\s\\S]{0,40}\\b(sudo\\s+)?(${SHELL_TOKENS.join(
+    "|",
+  )})\\b`,
+  "i",
+);
 export const SUBMISSION_RISK_COMMENT_MARKER = "<!-- submission-risk-report -->";
 
 const SEVERITY_WEIGHT = {
@@ -1252,9 +1265,7 @@ function addContentRiskSignals(report, fields, text) {
 
   if (
     referencesDestructiveRootRemoval(installText) ||
-    /\b(curl|wget)\b[\s\S]{0,120}\|[\s\S]{0,40}\b(sudo\s+)?(sh|bash)\b/i.test(
-      installText,
-    ) ||
+    CURL_PIPE_TO_SHELL_PATTERN.test(installText) ||
     /\b(invoke-expression|iex)\b/i.test(installText) ||
     /\bbase64\s+(-d|--decode)\b[\s\S]{0,80}\|[\s\S]{0,40}\b(sh|bash)\b/i.test(
       installText,

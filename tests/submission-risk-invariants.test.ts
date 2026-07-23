@@ -135,6 +135,40 @@ describe("submission risk invariants", () => {
     );
   });
 
+  it.each(["zsh", "dash", "ash", "sh", "bash"])(
+    "flags a curl download piped to %s as an unsafe install pipeline",
+    (shell) => {
+      const draft = {
+        ...buildSubmissionPrDraft({
+          ...validMcpFields,
+          slug: `pipe-${shell}-mcp`,
+          install_command: `curl https://example.com/install.sh | ${shell}`,
+        }),
+        labels: [{ name: "submission" }],
+        user: { login: "author" },
+      };
+      const report = analyzeSubmissionDraftRisk(
+        draft,
+        validateSubmission(draft),
+      );
+      expect(report.reviewFlags.map((flag) => flag.id)).toContain(
+        "unsafe_install_pipeline",
+      );
+    },
+  );
+
+  it("does not flag a benign npx install as an unsafe pipeline", () => {
+    const draft = {
+      ...buildSubmissionPrDraft({ ...validMcpFields, slug: "safe-mcp" }),
+      labels: [{ name: "submission" }],
+      user: { login: "author" },
+    };
+    const report = analyzeSubmissionDraftRisk(draft, validateSubmission(draft));
+    expect(report.reviewFlags.map((flag) => flag.id)).not.toContain(
+      "unsafe_install_pipeline",
+    );
+  });
+
   it("blocks unsafe executable pipelines in issue config snippets", () => {
     const draft = buildSubmissionPrDraft({
       ...validMcpFields,
