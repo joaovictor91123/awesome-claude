@@ -597,6 +597,17 @@ describe("getDistributionBadges", () => {
     expect(labels).toContain("source");
     expect(labels).not.toContain("copy-only");
   });
+
+  it("omits the source badge for a self-referential directory githubUrl", () => {
+    const labels = getDistributionBadges(
+      entry({
+        category: "tools",
+        githubUrl:
+          "https://github.com/JSONbored/awesome-claude/blob/main/content/tools/x.mdx",
+      }),
+    ).map((badge) => badge.label);
+    expect(labels).not.toContain("source");
+  });
 });
 
 describe("getEntryAccessSummary", () => {

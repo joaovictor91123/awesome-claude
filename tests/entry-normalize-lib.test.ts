@@ -182,6 +182,19 @@ describe("entry normalize lib helpers", () => {
       expect(inferSource(baseEntry())).toBe("unverified");
     });
 
+    it("does not treat the self-referential directory githubUrl as source-backed", () => {
+      // Every entry always carries this directory link; it must not by itself
+      // qualify an entry as source-backed.
+      expect(
+        inferSource(
+          baseEntry({
+            githubUrl:
+              "https://github.com/JSONbored/awesome-claude/blob/main/content/hooks/x.mdx",
+          }),
+        ),
+      ).toBe("unverified");
+    });
+
     it("derives trust posture from verification and notes", () => {
       const trusted = baseEntry({
         packageVerified: true,
