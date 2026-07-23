@@ -135,6 +135,46 @@ describe("submission risk invariants", () => {
     );
   });
 
+  it.each([
+    ["Anthropic sk-ant", "sk-ant-", `api03-${"a".repeat(30)}`],
+    ["OpenAI sk-proj", "sk-proj-", "b".repeat(30)],
+    ["plain sk-", "sk-", "c".repeat(24)],
+  ])("flags an embedded %s API key as a secret", (_label, prefix, rest) => {
+    // Assembled at runtime so no key-shaped literal sits in source; low-entropy
+    // filler keeps it obviously non-real while still matching the detector.
+    const key = prefix + rest;
+    const draft = {
+      ...buildSubmissionPrDraft({
+        ...validMcpFields,
+        slug: "secret-mcp",
+        usage_snippet: `Set the api key to ${key} before running.`,
+      }),
+      labels: [{ name: "submission" }],
+      user: { login: "author" },
+    };
+    const report = analyzeSubmissionDraftRisk(draft, validateSubmission(draft));
+    expect(report.reviewFlags.map((flag) => flag.id)).toContain(
+      "embedded_secret",
+    );
+  });
+
+  it("does not flag benign hyphenated text containing 'sk-' as a secret", () => {
+    const draft = {
+      ...buildSubmissionPrDraft({
+        ...validMcpFields,
+        slug: "benign-mcp",
+        usage_snippet:
+          "A task-management sk- reference for long-hyphenated workflows here.",
+      }),
+      labels: [{ name: "submission" }],
+      user: { login: "author" },
+    };
+    const report = analyzeSubmissionDraftRisk(draft, validateSubmission(draft));
+    expect(report.reviewFlags.map((flag) => flag.id)).not.toContain(
+      "embedded_secret",
+    );
+  });
+
   it("blocks unsafe executable pipelines in issue config snippets", () => {
     const draft = buildSubmissionPrDraft({
       ...validMcpFields,
