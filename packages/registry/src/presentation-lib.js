@@ -17,6 +17,19 @@ export function compactCount(value) {
   return String(value);
 }
 
+// `entry.githubUrl` is set unconditionally on every entry to a self-referential
+// link to the entry's own .mdx inside this directory's repo (content-builder's
+// buildGitHubUrl), so it never signals a real external source. Match
+// quality-lib's buildSourceProvenance exclusion so a real repo counts but the
+// always-present directory link does not.
+function hasRealSourceUrl(entry) {
+  return Boolean(
+    entry.repoUrl ||
+    (entry.githubUrl &&
+      !String(entry.githubUrl).includes("github.com/JSONbored/awesome-claude")),
+  );
+}
+
 export function parseAbbreviatedCount(value) {
   const text = String(value ?? "")
     .trim()
@@ -285,7 +298,7 @@ export function getDistributionBadges(entry) {
     });
   }
 
-  if (entry.repoUrl || entry.githubUrl) {
+  if (hasRealSourceUrl(entry)) {
     badges.push({
       label: "source",
       title: "Source or repository link available",
@@ -346,7 +359,7 @@ export function getEntryAccessSummary(entry) {
   const hasConfig = Boolean(source.configSnippet);
   const hasDownload = Boolean(source.downloadUrl);
   const hasDocs = Boolean(source.documentationUrl);
-  const hasSource = Boolean(source.repoUrl || source.githubUrl);
+  const hasSource = hasRealSourceUrl(source);
   const hasSafetyNotes =
     Array.isArray(source.safetyNotes) && source.safetyNotes.length > 0;
   const hasPrivacyNotes =

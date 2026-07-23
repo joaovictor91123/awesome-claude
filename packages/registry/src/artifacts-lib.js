@@ -178,6 +178,17 @@ function compactDefinedObject(value) {
   );
 }
 
+// `entry.githubUrl` is set unconditionally to a self-referential link to the
+// entry's own .mdx inside this directory's repo, so it is not a real external
+// source. Return it only when it points somewhere other than this repo,
+// matching quality-lib's buildSourceProvenance exclusion.
+function externalGithubUrl(entry) {
+  return entry.githubUrl &&
+    !String(entry.githubUrl).includes("github.com/JSONbored/awesome-claude")
+    ? entry.githubUrl
+    : "";
+}
+
 function raycastOneClickStdioCommandName(value) {
   const command = String(value || "").trim();
   if (!command || command.includes("/") || command.includes("\\")) return "";
@@ -1141,7 +1152,11 @@ export function buildPluginExportFeed(entries) {
     category: entry.category,
     ...buildEntryProvenanceFields(entry),
     ...buildEntryBrandFields(entry),
-    sourceUrl: entry.repoUrl || entry.githubUrl || entry.documentationUrl,
+    // `githubUrl` is the always-present self-referential directory link, not a
+    // real external repo, so it must not shadow documentationUrl as a plugin's
+    // "source" — only surface it when it points somewhere other than this repo.
+    sourceUrl:
+      entry.repoUrl || externalGithubUrl(entry) || entry.documentationUrl,
     installCommand: entry.installCommand || entry.commandSyntax || "",
     platformCompatibility:
       entry.category === "skills" ? buildSkillPlatformCompatibility(entry) : [],

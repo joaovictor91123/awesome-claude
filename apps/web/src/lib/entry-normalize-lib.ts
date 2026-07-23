@@ -277,7 +277,13 @@ export function inferSource(entry: RegistryEntry): SourceStatus {
   if (entry.downloadTrust === "first-party" || entry.trustSignals?.firstPartyEditorial) {
     return "first-party";
   }
-  if (entry.repoUrl || entry.githubUrl || entry.trustSignals?.sourceStatus === "available") {
+  // `githubUrl` is the always-present self-referential directory link, not a
+  // real external repo, so it must not by itself qualify an entry as
+  // source-backed (matching quality-lib's buildSourceProvenance exclusion).
+  const hasRealGithubUrl =
+    Boolean(entry.githubUrl) &&
+    !String(entry.githubUrl).includes("github.com/JSONbored/awesome-claude");
+  if (entry.repoUrl || hasRealGithubUrl || entry.trustSignals?.sourceStatus === "available") {
     return "source-backed";
   }
   if (entry.documentationUrl || entry.websiteUrl) return "external";
