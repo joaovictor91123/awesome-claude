@@ -2,8 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   getPlatformAdapter,
+  listRegistryResources,
   readRegistryResource,
 } from "../packages/mcp/src/registry-tool-orchestration-lib.js";
+
+const failingArtifactOptions = {
+  readJsonArtifact: async () => {
+    throw new Error("ENOENT: registry artifact missing");
+  },
+  readTextArtifact: async () => "",
+};
 
 const artifactOptions = {
   readJsonArtifact: async (relativePath: string) =>
@@ -105,6 +113,26 @@ describe("registry-tool-orchestration readRegistryResource uri routing", () => {
     expect(payload.total).toBe(30);
     expect(payload.entries.length).toBeLessThanOrEqual(25);
     expect(payload.count).toBe(payload.entries.length);
+  });
+
+  it("returns an unavailable envelope when a resource artifact read fails", async () => {
+    // A missing/corrupt artifact must not escape as a raw transport error.
+    const payload = resourcePayload(
+      await readRegistryResource(
+        { uri: "heyclaude://category/mcp" },
+        failingArtifactOptions,
+      ),
+    );
+    expect(payload.ok).toBe(false);
+    expect(payload.error?.code).toBe("unavailable");
+  });
+});
+
+describe("registry-tool-orchestration listRegistryResources", () => {
+  it("returns an unavailable envelope when the manifest read fails", async () => {
+    const result = await listRegistryResources({}, failingArtifactOptions);
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe("unavailable");
   });
 });
 
